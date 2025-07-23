@@ -10,6 +10,7 @@ The goal of this project is to create a suite of specialized agents that extend 
 
 - **File Analyzer Agent:** A simple agent that can perform basic analysis on files, such as counting lines.
 - **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks.
+- **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace.
 
 ## Getting Started
 
