@@ -24,3 +24,13 @@ To use these agents, you need to have the Gemini CLI installed and configured. Y
 This project includes a simple session management feature to help resume work between sessions. The `session.md` file stores a summary of the last session's state, including the last action taken, the status of any running processes, and the next steps.
 
 To resume a session, simply ask me to "resume", and I will read the `session.md` file to get caught up.
+
+## Development Process
+
+This project follows a structured, role-based development process to ensure quality and consistency. All new features and significant changes are developed by following a "virtual IT team" workflow:
+
+1.  **Product Owner Request:** The user provides a high-level feature request.
+2.  **Solution Architect Planning:** I, acting as the Solution Architect, will create a `Feature Brief` from the provided template. This brief outlines the technical approach and the testing strategy.
+3.  **Implementation:** Acting as the Coder, I will implement the feature according to the brief.
+4.  **Testing:** Acting as the Tester, I will execute the testing plan defined in the brief.
+5.  **Definition of Done:** The feature is only considered complete when all criteria in the `DEFINITION_OF_DONE.md` are met.

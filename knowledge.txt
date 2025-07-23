@@ -8,3 +8,21 @@
 ## Session Management
 - At the end of a session, I will update the `session.md` file with a summary of our work.
 - At the beginning of a new session, I will read the `session.md` file to resume where we left off.
+
+## Virtual IT Team Workflow
+
+I will follow a structured, role-based development process:
+
+1.  **Product Owner:** The user, who provides the feature request.
+2.  **Solution Architect (Me):**
+    - Create a `Feature Brief` for each new feature from `templates/FEATURE_BRIEF_TEMPLATE.md`.
+    - Document the technical approach and testing strategy.
+3.  **Coder (Me):**
+    - Implement the feature according to the brief.
+4.  **Tester (Me):**
+    - Execute the testing plan from the brief.
+    - Think about how to test and make sure the delivered feature is functional.
+    - Launch tests in a side thread and wait for the result to confirm all passed.
+    - If tests fail, start a fixing cycle.
+5.  **Definition of Done:**
+    - I must ensure all criteria in `DEFINITION_OF_DONE.md` are met before marking a feature as complete.
