@@ -3,4 +3,5 @@
 - [X] Create the File Analyzer Agent.
 - [X] Implement session resume mechanic.
 - [X] Formalize the development process (Virtual IT Team).
+- [ ] Add Web Surfer Agent.
 - [ ] Add more agents to the project.
