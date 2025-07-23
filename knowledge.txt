@@ -26,3 +26,19 @@ I will follow a structured, role-based development process:
     - If tests fail, start a fixing cycle.
 5.  **Definition of Done:**
     - I must ensure all criteria in `DEFINITION_OF_DONE.md` are met before marking a feature as complete.
+
+## Agent-Specific Testing Procedures
+
+### Web Surfer Agent
+
+1.  **Pre-requisites:**
+    - The agent must be running: `uvicorn --host 0.0.0.0 --port 8001 web_surfer_agent.main:app`
+    - The virtual environment must be active.
+
+2.  **`/take-screenshot` Test:**
+    - **Command:** `curl -X POST -H "Content-Type: application/json" -d '{"url": "https://example.com", "path": "/tmp/test_screenshot.png"}' http://localhost:8001/take-screenshot`
+    - **Verification:** Check for a `{"status": "success", ...}` response and confirm the file `/tmp/test_screenshot.png` was created.
+
+3.  **`/click` Test:**
+    - **Command:** `curl -X POST -H "Content-Type: application/json" -d '{"url": "https://example.com", "x": 10, "y": 10}' http://localhost:8001/click`
+    - **Verification:** Check for a `{"status": "success"}` response.
