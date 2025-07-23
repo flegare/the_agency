@@ -4,4 +4,5 @@
 - [X] Implement session resume mechanic.
 - [X] Formalize the development process (Virtual IT Team).
 - [X] Add Web Surfer Agent.
+- [ ] Create agent launcher script.
 - [ ] Add more agents to the project.

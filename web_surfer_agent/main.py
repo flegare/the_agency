@@ -40,3 +40,8 @@ async def click(request: ClickRequest) -> dict:
         await page.mouse.click(request.x, request.y)
         await browser.close()
     return {"status": "success"}
+
+@app.get("/health", summary="Health check endpoint")
+async def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}

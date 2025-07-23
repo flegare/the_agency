@@ -20,3 +20,8 @@ def count_lines(request: FilePathRequest) -> dict:
         return {"path": request.path, "line_count": lines}
     except Exception as e:
         return {"error": str(e)}
+
+@app.get("/health", summary="Health check endpoint")
+def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}
