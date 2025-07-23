@@ -16,6 +16,10 @@ The goal of this project is to create a suite of specialized agents that extend 
 
 This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker.
 
+## Workspace
+
+This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker.
+
 ## Getting Started
 
 To use these agents, you need to have the Gemini CLI installed and configured. You also need to run the agent web services.

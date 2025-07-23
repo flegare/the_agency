@@ -35,16 +35,49 @@ def start_project(request: ProjectRequest):
     subprocess.Popen(["bash", start_script], cwd=project_path)
     return {"status": f"Start command issued for {request.project_name}"}
 
-@app.post("/stop_project", summary="Stop a project by killing its process")
+@app.post("/stop_project", summary="Stop a project by killing its process or stopping its container")
 def stop_project(request: ProjectRequest):
     project_path = os.path.join(WORKSPACE_DIR, request.project_name)
     stop_script = os.path.join(project_path, "stop.sh")
-    if not os.path.exists(stop_script):
-        raise HTTPException(status_code=404, detail="stop.sh not found")
+    pid_file = os.path.join(project_path, ".pid")
+
+    if not os.path.exists(project_path):
+        return {"status": f"Project {request.project_name} not found, nothing to stop."}
+
+    # Priority 1: Use stop.sh if it exists (most specific, good for docker-compose)
+    if os.path.exists(stop_script):
+        print(f"Using stop.sh for project {request.project_name}")
+        subprocess.run(["bash", stop_script], cwd=project_path, capture_output=True, text=True)
+        return {"status": f"Executed stop.sh for {request.project_name}"}
+
+    # Priority 2: Use .pid file if it exists (for simple processes or single containers)
+    elif os.path.exists(pid_file):
+        print(f"Using .pid file for project {request.project_name}")
+        with open(pid_file, 'r') as f:
+            pid_or_name = f.read().strip()
+        
+        # Try to kill as a PID first
+        try:
+            pid = int(pid_or_name)
+            os.kill(pid, 15)  # 15 = SIGTERM
+            os.remove(pid_file)
+            return {"status": f"Kill command issued for process {pid} of project {request.project_name}"}
+        except ValueError:
+            # It's a container name
+            container_name = pid_or_name
+            print(f"Attempting to stop Docker container by name: {container_name}")
+            subprocess.run(["docker", "stop", container_name], capture_output=True, text=True)
+            subprocess.run(["docker", "rm", container_name], capture_output=True, text=True)
+            os.remove(pid_file)
+            return {"status": f"Docker container {container_name} stopped and removed."}
+        except ProcessLookupError:
+            print(f"Process with PID {pid_or_name} not found. Removing stale .pid file.")
+            os.remove(pid_file) # Clean up stale file
+            return {"status": f"Stale process {pid_or_name} for project {request.project_name} cleaned up."}
     
-    # Execute stop.sh in the background
-    subprocess.Popen(["bash", stop_script], cwd=project_path)
-    return {"status": f"Stop command issued for {request.project_name}"}
+    else:
+        # No stop method found
+        raise HTTPException(status_code=404, detail=f"No stop method (stop.sh or .pid) found for project {request.project_name}")
 
 @app.get("/get_logs", summary="Get the logs for a project")
 def get_logs(project_name: str):
@@ -56,7 +89,7 @@ def get_logs(project_name: str):
         return {"logs": f.read()}
 
 @app.post("/delete_project", summary="Delete a project and all its files")
-async def delete_project(request: ProjectRequest):
+def delete_project(request: ProjectRequest):
     project_path = os.path.join(WORKSPACE_DIR, request.project_name)
     if not os.path.exists(project_path):
         raise HTTPException(status_code=404, detail="Project not found")
