@@ -1,4 +1,4 @@
 # TODO
 
-- [ ] Create the File Analyzer Agent.
+- [X] Create the File Analyzer Agent.
 - [ ] Add more agents to the project.
