@@ -18,3 +18,9 @@ To use these agents, you need to have the Gemini CLI installed and configured. Y
 2.  For each agent, navigate to its directory and install the required dependencies.
 3.  Run the agent's web service.
 4.  Copy the agent's OpenAPI specification to the `.gemini/tools/` directory.
+
+## Session Management
+
+This project includes a simple session management feature to help resume work between sessions. The `session.md` file stores a summary of the last session's state, including the last action taken, the status of any running processes, and the next steps.
+
+To resume a session, simply ask me to "resume", and I will read the `session.md` file to get caught up.
