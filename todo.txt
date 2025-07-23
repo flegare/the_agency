@@ -7,5 +7,6 @@
 - [X] Create agent launcher script.
 - [X] Create Workspace Manager Agent.
 - [X] Test Docker project creation.
+- [X] Implement Cyclic Error Watchdog protocol.
 - [ ] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
 - [ ] Add more agents to the project.

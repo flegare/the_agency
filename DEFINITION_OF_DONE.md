@@ -12,3 +12,4 @@ A feature is considered **DONE** only when all the following criteria are met:
 6.  **TODO List Updated:** The `todo.txt` file is updated to mark the feature as complete.
 7.  **Session State Cleared:** The `session.md` is updated to reflect the completion of the task and outline the next steps.
 8.  **Code Committed:** All related changes are committed to Git with a conventional commit message (e.g., `feat:`, `fix:`, `docs:`).
+9.  **Watchdog Compliance:** The implementation process did not trigger the Cyclic Error Watchdog. If it did, the final, successful approach is documented.

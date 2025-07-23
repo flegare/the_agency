@@ -1,5 +1,6 @@
 # /home/cortex/agents_tools/workspace_manager_agent/main.py
 import os
+import shutil
 import subprocess
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -53,6 +54,23 @@ def get_logs(project_name: str):
         raise HTTPException(status_code=404, detail="project.log not found")
     with open(log_file, 'r') as f:
         return {"logs": f.read()}
+
+@app.post("/delete_project", summary="Delete a project and all its files")
+async def delete_project(request: ProjectRequest):
+    project_path = os.path.join(WORKSPACE_DIR, request.project_name)
+    if not os.path.exists(project_path):
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    # First, try to stop the project if it's running
+    try:
+        stop_project(request)
+    except HTTPException as e:
+        # Ignore errors if the project wasn't running (e.g., no stop.sh or .pid file)
+        print(f"Note: Could not stop project {request.project_name} (may have already been stopped): {e.detail}")
+
+    # Now, delete the directory
+    shutil.rmtree(project_path)
+    return {"status": f"Project {request.project_name} has been deleted"}
 
 @app.get("/health", summary="Health check endpoint")
 def health_check() -> dict:

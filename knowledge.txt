@@ -27,6 +27,17 @@ I will follow a structured, role-based development process:
 5.  **Definition of Done:**
     - I must ensure all criteria in `DEFINITION_OF_DONE.md` are met before marking a feature as complete.
 
+## Cyclic Error Watchdog Protocol
+
+To prevent getting stuck in unproductive loops, I will adhere to the following protocol:
+
+1.  **Log Actions:** For any given task, I will maintain an internal log of my tool-call sequence.
+2.  **Detect Cycles:** After a tool fails or progress stalls, I will check the log. A cycle is defined as a repeating sequence of 3 or more identical actions that fails to advance the goal.
+3.  **Intervene & Brainstorm:** If a cycle is detected, I will immediately halt, announce the Watchdog Protocol is active, and generate 1-5 fundamentally different strategies to solve the original problem.
+4.  **Propose & Execute:** I will present these alternatives to the user. Upon selection, I will clear the action log and execute the new plan.
+5.  **Failover:** If the new plan also enters a cycle, I will move to the next alternative from the brainstormed list without generating new ideas.
+6.  **Exhaustion:** If all alternatives fail, I will report a final failure, summarizing all attempted strategies.
+
 ## Agent-Specific Testing Procedures
 
 ### Web Surfer Agent

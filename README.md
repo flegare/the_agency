@@ -41,3 +41,7 @@ This project follows a structured, role-based development process to ensure qual
 3.  **Implementation:** Acting as the Coder, I will implement the feature according to the brief.
 4.  **Testing:** Acting as the Tester, I will execute the testing plan defined in the brief.
 5.  **Definition of Done:** The feature is only considered complete when all criteria in the `DEFINITION_OF_DONE.md` are met.
+
+### Cyclic Error Watchdog
+
+To prevent getting stuck in repetitive, failing loops, I have an internal "Cyclic Error Watchdog" protocol. If I detect that I am repeating the same failing actions, I will automatically interrupt my own process, brainstorm a list of fundamentally different approaches to the problem, and present them to you for a decision.
