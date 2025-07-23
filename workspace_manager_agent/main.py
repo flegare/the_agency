@@ -10,7 +10,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-WORKSPACE_DIR = "/home/cortex/projects"
+WORKSPACE_DIR = "/home/cortex/agents_tools/workspace"
 
 class ProjectRequest(BaseModel):
     project_name: str

@@ -1,5 +1,20 @@
 #!/bin/bash
 
+# --- Configuration ---
+# Colors for output
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# --- Banner ---
+echo -e "${GREEN}###################################${NC}"
+echo -e "${GREEN}#                                 #${NC}"
+echo -e "${GREEN}#        STARTING AGENTS          #${NC}"
+echo -e "${GREEN}#                                 #${NC}"
+echo -e "${GREEN}###################################${NC}"
+echo ""
+
+# --- Script Logic ---
 # Create logs directory if it doesn't exist
 mkdir -p logs
 
@@ -16,9 +31,9 @@ PID_FILE=".agent_pids"
 # Find all agent directories (containing requirements.txt)
 for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n'); do
     agent_name=$(basename $agent_dir)
-    echo "Starting $agent_name on port $PORT..."
+    echo -e "🚀 Starting ${YELLOW}$agent_name${NC} on port ${YELLOW}$PORT${NC}..."
 
-    # Start the agent in the background using nohup to prevent hanging
+    # Start the agent in the background using nohup
     nohup uvicorn --host 0.0.0.0 --port $PORT "${agent_name}.main:app" > "logs/${agent_name}.log" 2>&1 &
     
     # Save the PID
@@ -28,4 +43,5 @@ for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n'); do
     PORT=$((PORT + 1))
 done
 
-echo "All agents started. Logs are in the 'logs' directory."
+echo ""
+echo -e "${GREEN}✅ All agents started. Logs are in the 'logs' directory.${NC}"
