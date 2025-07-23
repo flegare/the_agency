@@ -5,4 +5,5 @@
 - [X] Formalize the development process (Virtual IT Team).
 - [X] Add Web Surfer Agent.
 - [X] Create agent launcher script.
+- [ ] Create Workspace Manager Agent.
 - [ ] Add more agents to the project.
