@@ -6,5 +6,6 @@
 - [X] Add Web Surfer Agent.
 - [X] Create agent launcher script.
 - [X] Create Workspace Manager Agent.
+- [X] Test Docker project creation.
 - [ ] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
 - [ ] Add more agents to the project.

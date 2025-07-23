@@ -37,16 +37,12 @@ def start_project(request: ProjectRequest):
 @app.post("/stop_project", summary="Stop a project by killing its process")
 def stop_project(request: ProjectRequest):
     project_path = os.path.join(WORKSPACE_DIR, request.project_name)
-    pid_file = os.path.join(project_path, ".pid")
-    if not os.path.exists(pid_file):
-        raise HTTPException(status_code=404, detail=".pid file not found")
-    with open(pid_file, 'r') as f:
-        pid = int(f.read().strip())
-    try:
-        os.kill(pid, 15) # 15 = SIGTERM
-        os.remove(pid_file)
-    except ProcessLookupError:
-        raise HTTPException(status_code=404, detail=f"Process with PID {pid} not found.")
+    stop_script = os.path.join(project_path, "stop.sh")
+    if not os.path.exists(stop_script):
+        raise HTTPException(status_code=404, detail="stop.sh not found")
+    
+    # Execute stop.sh in the background
+    subprocess.Popen(["bash", stop_script], cwd=project_path)
     return {"status": f"Stop command issued for {request.project_name}"}
 
 @app.get("/get_logs", summary="Get the logs for a project")

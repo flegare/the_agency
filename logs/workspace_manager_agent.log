@@ -1,17 +1,101 @@
-INFO:     Started server process [776124]
+INFO:     Started server process [777421]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     127.0.0.1:47622 - "POST /create_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43998 - "POST /start_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:43974 - "GET /get_logs?project_name=hello_world_test HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50290 - "POST /stop_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:50296 - "POST /start_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:40814 - "GET /get_logs?project_name=hello_world_test HTTP/1.1" 200 OK
-INFO:     127.0.0.1:56138 - "POST /stop_project HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:56152 - "POST /start_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:48746 - "GET /get_logs?project_name=hello_world_test HTTP/1.1" 200 OK
-INFO:     127.0.0.1:59718 - "POST /stop_project HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:59726 - "POST /start_project HTTP/1.1" 200 OK
-INFO:     127.0.0.1:54654 - "POST /stop_project HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:41606 - "POST /start_project HTTP/1.1" 200 OK
+INFO:     127.0.0.1:55948 - "POST /start_project HTTP/1.1" 200 OK
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 93B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/nginx:alpine
+#2 DONE 0.6s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 61B done
+#4 DONE 0.0s
+
+#5 [1/2] FROM docker.io/library/nginx:alpine@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+#5 resolve docker.io/library/nginx:alpine@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779 0.0s done
+#5 sha256:845b5424415de5f77dd5753cbb7c1be8bd8e44cc81f20f9705783a02f8848317 2.50kB / 2.50kB done
+#5 sha256:d6adbc7fd47ec44ff968ea826c84f41d0d5a70a2dce4bd030757f9b7fe9040b8 10.78kB / 10.78kB done
+#5 sha256:9824c27679d3b27c5e1cb00a73adb6f4f8d556994111c12db3c5d61a0c843df8 0B / 3.80MB 0.1s
+#5 sha256:fd372c3c84a23422bc07489867f8c2e7e99774680380ccf89c0a269b71b5690f 0B / 628B 0.1s
+#5 sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779 10.33kB / 10.33kB done
+#5 sha256:a5585638209eba93a3af07035d353e512187e9884e402ded45565e264bedb7e1 0B / 1.81MB 0.1s
+#5 sha256:9824c27679d3b27c5e1cb00a73adb6f4f8d556994111c12db3c5d61a0c843df8 3.80MB / 3.80MB 0.2s
+#5 sha256:fd372c3c84a23422bc07489867f8c2e7e99774680380ccf89c0a269b71b5690f 628B / 628B 0.2s
+#5 extracting sha256:9824c27679d3b27c5e1cb00a73adb6f4f8d556994111c12db3c5d61a0c843df8
+#5 sha256:9824c27679d3b27c5e1cb00a73adb6f4f8d556994111c12db3c5d61a0c843df8 3.80MB / 3.80MB 0.2s done
+#5 sha256:fd372c3c84a23422bc07489867f8c2e7e99774680380ccf89c0a269b71b5690f 628B / 628B 0.2s done
+#5 sha256:a5585638209eba93a3af07035d353e512187e9884e402ded45565e264bedb7e1 1.81MB / 1.81MB 0.2s done
+#5 sha256:958a74d6a238e799e7819c7408602b9c5481fa5eda0ee5bcbe1932f685d9d3b9 956B / 956B 0.3s done
+#5 sha256:828fa206d77bc99972844d67b1a617a841c74f15e71c71e656d1437bd26c15b8 0B / 1.21kB 0.3s
+#5 sha256:bdaad27fd04a102fe15f473a31a82321c0625a6a3603bd9522bf058eb8a194e2 0B / 1.40kB 0.3s
+#5 sha256:c1d2dc189e3831ffcb9a19138df97d141f3bd13a13a1513b137cc7ca6e94fa09 0B / 405B 0.3s
+#5 extracting sha256:9824c27679d3b27c5e1cb00a73adb6f4f8d556994111c12db3c5d61a0c843df8 0.1s done
+#5 sha256:828fa206d77bc99972844d67b1a617a841c74f15e71c71e656d1437bd26c15b8 1.21kB / 1.21kB 0.4s done
+#5 sha256:c1d2dc189e3831ffcb9a19138df97d141f3bd13a13a1513b137cc7ca6e94fa09 405B / 405B 0.4s done
+#5 extracting sha256:a5585638209eba93a3af07035d353e512187e9884e402ded45565e264bedb7e1 0.0s done
+#5 sha256:f23865b38cc69ad61d7a272610d411a4e66c2ed6ab2f374ff8e7f947ecfffb28 0B / 16.78MB 0.4s
+#5 sha256:bdaad27fd04a102fe15f473a31a82321c0625a6a3603bd9522bf058eb8a194e2 1.40kB / 1.40kB 0.4s done
+#5 extracting sha256:fd372c3c84a23422bc07489867f8c2e7e99774680380ccf89c0a269b71b5690f done
+#5 extracting sha256:958a74d6a238e799e7819c7408602b9c5481fa5eda0ee5bcbe1932f685d9d3b9
+#5 sha256:f23865b38cc69ad61d7a272610d411a4e66c2ed6ab2f374ff8e7f947ecfffb28 16.78MB / 16.78MB 0.7s
+#5 extracting sha256:958a74d6a238e799e7819c7408602b9c5481fa5eda0ee5bcbe1932f685d9d3b9 done
+#5 extracting sha256:c1d2dc189e3831ffcb9a19138df97d141f3bd13a13a1513b137cc7ca6e94fa09 done
+#5 extracting sha256:828fa206d77bc99972844d67b1a617a841c74f15e71c71e656d1437bd26c15b8 done
+#5 extracting sha256:bdaad27fd04a102fe15f473a31a82321c0625a6a3603bd9522bf058eb8a194e2 done
+#5 sha256:f23865b38cc69ad61d7a272610d411a4e66c2ed6ab2f374ff8e7f947ecfffb28 16.78MB / 16.78MB 0.7s done
+#5 extracting sha256:f23865b38cc69ad61d7a272610d411a4e66c2ed6ab2f374ff8e7f947ecfffb28 0.1s
+#5 extracting sha256:f23865b38cc69ad61d7a272610d411a4e66c2ed6ab2f374ff8e7f947ecfffb28 0.5s done
+#5 DONE 1.4s
+
+#6 [2/2] COPY index.html /usr/share/nginx/html
+#6 DONE 0.3s
+
+#7 exporting to image
+#7 exporting layers 0.0s done
+#7 writing image sha256:968366eb98cf7032e1674b3f14c9f340c1ba44a35ac31451a8d1a5ccb56ac12e done
+#7 naming to docker.io/library/hello-docker done
+#7 DONE 0.0s
+docker: Error response from daemon: failed to set up container networking: driver failed programming external connectivity on endpoint hello-docker-container (6ff391833a8ac78da0826161481b11d12f4d870f832b19dc241b845169c944ef): Bind for 0.0.0.0:8081 failed: port is already allocated
+
+Run 'docker run --help' for more information
+INFO:     127.0.0.1:51552 - "POST /stop_project HTTP/1.1" 200 OK
+3b51229074d72672cffd9006697202c02c5c0bd01569dff88b0cd1b837991868
+3b51229074d72672cffd9006697202c02c5c0bd01569dff88b0cd1b837991868
+INFO:     127.0.0.1:51562 - "POST /start_project HTTP/1.1" 200 OK
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 93B done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/nginx:alpine
+#2 DONE 0.1s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [1/2] FROM docker.io/library/nginx:alpine@sha256:d67ea0d64d518b1bb04acde3b00f722ac3e9764b3209a9b0a98924ba35e4b779
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 31B done
+#5 DONE 0.0s
+
+#6 [2/2] COPY index.html /usr/share/nginx/html
+#6 CACHED
+
+#7 exporting to image
+#7 exporting layers done
+#7 writing image sha256:968366eb98cf7032e1674b3f14c9f340c1ba44a35ac31451a8d1a5ccb56ac12e done
+#7 naming to docker.io/library/hello-docker done
+#7 DONE 0.0s
