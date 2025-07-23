@@ -1,0 +1,6 @@
+# Knowledge Base
+
+## Gemini CLI
+
+- The Gemini CLI can be extended with tools by placing OpenAPI specifications in the `.gemini/tools/` directory.
+- The `save_memory` tool can be used to remember user-specific facts or preferences.
