@@ -1,4 +1,5 @@
 # TODO
 
 - [X] Create the File Analyzer Agent.
+- [X] Implement session resume mechanic.
 - [ ] Add more agents to the project.
