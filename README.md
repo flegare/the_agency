@@ -18,7 +18,7 @@ This project now includes a `workspace` directory where new projects can be crea
 
 ## Workspace
 
-This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker.
+This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker and Firebase.
 
 ## Getting Started
 

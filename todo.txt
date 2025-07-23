@@ -9,5 +9,6 @@
 - [X] Test Docker project creation.
 - [X] Implement Cyclic Error Watchdog protocol.
 - [X] Implement Project Remover capability.
+- [X] Test Firebase project creation and deployment.
 - [ ] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
 - [ ] Add more agents to the project.

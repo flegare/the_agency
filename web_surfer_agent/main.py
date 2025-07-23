@@ -25,6 +25,7 @@ async def take_screenshot(request: ScreenshotRequest) -> dict:
     async with async_playwright() as p:
         browser = await p.chromium.launch()
         page = await browser.new_page()
+        await asyncio.sleep(5) # Add a 5-second delay
         await page.goto(request.url)
         await page.screenshot(path=request.path)
         await browser.close()
