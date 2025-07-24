@@ -34,7 +34,7 @@ for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n'); do
     echo -e "🚀 Starting ${YELLOW}$agent_name${NC} on port ${YELLOW}$PORT${NC}..."
 
     # Start the agent in the background using nohup
-    nohup uvicorn --host 0.0.0.0 --port $PORT "${agent_name}.main:app" > "logs/${agent_name}.log" 2>&1 &
+    (cd "$agent_dir" && nohup uvicorn main:app --host 0.0.0.0 --port $PORT > "../logs/${agent_name}.log" 2>&1 &)
     
     # Save the PID
     echo $! >> $PID_FILE

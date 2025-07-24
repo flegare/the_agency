@@ -9,6 +9,7 @@ The goal of this project is to create a suite of specialized agents that extend 
 ## Agents
 
 - **File Analyzer Agent:** A simple agent that can perform basic analysis on files, such as counting lines.
+- **Ollama Agent:** An agent that can interface with a local Ollama instance.
 - **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks.
 - **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace.
 
@@ -25,7 +26,7 @@ This project now includes a `workspace` directory where new projects can be crea
 To use these agents, you need to have the Gemini CLI installed and configured. You also need to run the agent web services.
 
 1.  Clone this repository.
-2.  Install the dependencies for all agents: `pip install -r file_analyzer_agent/requirements.txt && pip install -r web_surfer_agent/requirements.txt`
+2.  Install the dependencies for all agents: `pip install -r file_analyzer_agent/requirements.txt && pip install -r web_surfer_agent/requirements.txt && pip install -r ollama_agent/requirements.txt`
 3.  Run the `start_agents.sh` script to launch all agents: `./scripts/start_agents.sh`
 4.  The agents will be running on ports 8000 and 8001.
 5.  To make the agents available as tools, copy their OpenAPI specifications to the `.gemini/tools/` directory.

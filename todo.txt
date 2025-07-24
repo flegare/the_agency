@@ -10,6 +10,8 @@
 - [X] Implement Cyclic Error Watchdog protocol.
 - [X] Implement Project Remover capability.
 - [X] Test Firebase project creation and deployment.
-- [ ] Create Secret Manager Agent.
+- [X] Create Secret Manager Agent.
+- [X] Create Ollama Agent.
 - [ ] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
 - [ ] Add more agents to the project.
+- [ ] Create a "root agent" to orchestrate other agents.
