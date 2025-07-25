@@ -11,11 +11,15 @@ app = FastAPI(
 )
 
 # --- Configuration ---
-PROJECT_ID = "projectgenerator-hackathon"
+PROJECT_ID = "your-project-id"
 
 # --- Pydantic Models ---
 class SecretCreateRequest(BaseModel):
     secret_name: str
+    secret_value: str | None = None
+
+class SecretAddVersionRequest(BaseModel):
+    secret_value: str
 
 # --- Helper Functions ---
 def get_secret_client():
@@ -29,17 +33,30 @@ def create_secret(request: SecretCreateRequest):
     secret_id = request.secret_name
 
     try:
-        client.create_secret(
+        secret = client.create_secret(
             request={"parent": parent, "secret_id": secret_id, "secret": {"replication": {"automatic": {}}}}
         )
-        gcloud_command = f'echo "PASTE_YOUR_SECRET_HERE" | gcloud secrets versions add {secret_id} --data-file=-'
-        return {
-            "status": f"Empty secret '{secret_id}' created.",
-            "next_step": "Please run the following command in your local terminal to add the secret value:",
-            "command": gcloud_command
-        }
+        if request.secret_value:
+            client.add_secret_version(
+                request={"parent": secret.name, "payload": {"data": request.secret_value.encode("UTF-8")}}
+            )
+            return {"status": f"Secret '{secret_id}' created and value added."}
+        return {"status": f"Empty secret '{secret_id}' created."}
     except Exception as e:
         raise HTTPException(status_code=409, detail=f"Secret '{secret_id}' likely already exists. Error: {e}")
+
+@app.post("/secrets/{secret_name}/versions", summary="Add a new version to an existing secret")
+def add_secret_version(secret_name: str, request: SecretAddVersionRequest):
+    client = get_secret_client()
+    parent = f"projects/{PROJECT_ID}/secrets/{secret_name}"
+
+    try:
+        client.add_secret_version(
+            request={"parent": parent, "payload": {"data": request.secret_value.encode("UTF-8")}}
+        )
+        return {"status": f"New version added to secret '{secret_name}'."}
+    except Exception as e:
+        raise HTTPException(status_code=404, detail=f"Secret '{secret_name}' not found or could not add version. Error: {e}")
 
 @app.get("/secrets/{secret_name}", summary="Get the value of a secret")
 def get_secret(secret_name: str):
