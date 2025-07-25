@@ -6,28 +6,30 @@ import re
 
 app = FastAPI()
 
-class ProjectDescription(BaseModel):
-    description: str
+class ProjectAbstract(BaseModel):
+    abstract: str
 
-@app.post("/generate_name")
-def generate_name(project: ProjectDescription):
-    """
-    Generates project name suggestions based on a description.
-    """
+@app.post("/generate_project_brief")
+async def generate_project_brief(project: ProjectAbstract):
     prompt = f"""
-    You are an expert in branding and naming projects.
-    Given the following project description, generate 5 creative and suitable names.
-    For each name, provide a short, compelling tagline.
-    Return the output as a valid JSON object with a single key "suggestions" which is an array of objects, where each object has "name" and "tagline" keys.
+    You are a Project Office agent. Your task is to take an abstract project description and generate a detailed project brief.
+    The project brief should include:
+    1.  **Project Brief:** A concise summary of the project.
+    2.  **Objectives:** Clear, measurable objectives for the project.
+    3.  **Criteria of Success:** How the success of the project will be measured.
+    4.  **High-Level Features (To-Do List):** A list of high-level features or tasks that need to be done to achieve the project objectives.
 
-    Project Description:
-    {project.description}
+    Return the output as a valid JSON object with the following keys: "project_brief", "objectives", "criteria_of_success", and "high_level_features".
+    The "high_level_features" should be an array of strings.
+
+    Project Abstract:
+    {project.abstract}
 
     JSON Output:
     """
 
     response = ollama.chat(
-        model="deepseek-r1", # Or any other model you have available
+        model="deepseek-r1",
         messages=[
             {
                 'role': 'user',
@@ -53,13 +55,13 @@ def generate_name(project: ProjectDescription):
             return { "error": "No valid JSON output found in LLM response", "response": content }
 
     try:
-        suggestions = json.loads(json_string)
-        return suggestions
+        brief_data = json.loads(json_string)
+        return brief_data
     except json.JSONDecodeError as e:
         return { "error": "Failed to parse extracted JSON", "details": str(e), "response": content }
     except KeyError as e:
         return { "error": "Missing key in LLM response", "details": str(e), "response": content }
 
 @app.get("/")
-def read_root():
-    return {"message": "Name Generator Agent is running"}
+async def read_root():
+    return {"message": "Project Office Agent is running"}
