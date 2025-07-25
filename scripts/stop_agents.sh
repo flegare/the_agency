@@ -1,24 +1,25 @@
 #!/bin/bash
 
 # --- Configuration ---
-# Colors for output
 RED='\033[0;31m'
-YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # --- Banner ---
 echo -e "${RED}###################################${NC}"
-echo -e "${RED}#                                 #${NC}"
-echo -e "${RED}#         STOPPING AGENTS         #${NC}"
-echo -e "${RED}#                                 #${NC}"
-echo -e "${RED}###################################${NC}"
+echo -e "#                                 #"
+echo -e "#         STOPPING AGENTS         #"
+echo -e "#                                 #"
+echo -e "###################################${NC}"
 echo ""
 
 # --- Script Logic ---
-echo -e "🛑 Stopping all running ${YELLOW}uvicorn${NC} agent processes..."
+echo -e "🛑 Stopping all running uvicorn agent processes..."
 
-# Find and kill all uvicorn processes related to our agents.
-pkill -f "uvicorn --host 0.0.0.0"
+# Find and kill all uvicorn processes
+PIDS=$(lsof -t -i:8000-8005)
+if [ -n "$PIDS" ]; then
+    kill -9 $PIDS
+fi
 
 # Clean up the old PID file if it exists
 if [ -f ".agent_pids" ]; then
