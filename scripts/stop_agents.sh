@@ -15,11 +15,11 @@ echo ""
 # --- Script Logic ---
 echo -e "🛑 Stopping all running uvicorn agent processes..."
 
-# Find and kill all uvicorn processes
-PIDS=$(lsof -t -i:8000-8005)
-if [ -n "$PIDS" ]; then
-    kill -9 $PIDS
-fi
+# Use pkill to terminate all uvicorn processes
+pkill -f uvicorn
+
+# Give processes a moment to terminate
+sleep 2
 
 # Clean up the old PID file if it exists
 if [ -f ".agent_pids" ]; then

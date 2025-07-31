@@ -4,3 +4,9 @@ screenshots/
 .agent_pids
 /workspace/
 logs/*.log
+.agent_container_ids
+.agent_ports
+.agent_ports_dockerized
+.venv_test/
+archive_payload.py
+logs/
