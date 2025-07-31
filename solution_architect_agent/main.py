@@ -73,6 +73,11 @@ async def generate_solution_approach(brief: ProjectBrief):
     except KeyError as e:
         return { "error": "Missing key in LLM response", "details": str(e), "response": content }
 
+@app.get("/health", summary="Health check endpoint")
+def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}
+
 @app.get("/")
 async def read_root():
     return {"message": "Solution Architect Agent is running"}

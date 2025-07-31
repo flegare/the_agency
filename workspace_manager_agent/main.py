@@ -15,6 +15,7 @@ WORKSPACE_DIR = "/home/cortex/agents_tools/workspace"
 
 class ProjectRequest(BaseModel):
     project_name: str
+    template_name: str | None = None
 
 @app.post("/create_project", summary="Create a new project directory")
 def create_project(request: ProjectRequest):
@@ -22,18 +23,32 @@ def create_project(request: ProjectRequest):
     if os.path.exists(project_path):
         raise HTTPException(status_code=400, detail="Project already exists")
     os.makedirs(project_path)
+
+    if request.template_name:
+        template_path = os.path.join("/home/cortex/agents_tools/templates/docker_templates", request.template_name)
+        if not os.path.exists(template_path):
+            raise HTTPException(status_code=400, detail=f"Template {request.template_name} not found.")
+        shutil.copytree(template_path, project_path, dirs_exist_ok=True)
+
     return {"status": "success", "path": project_path}
 
 @app.post("/start_project", summary="Start a project by executing its start.sh script")
 def start_project(request: ProjectRequest):
     project_path = os.path.join(WORKSPACE_DIR, request.project_name)
     start_script = os.path.join(project_path, "start.sh")
-    if not os.path.exists(start_script):
-        raise HTTPException(status_code=404, detail="start.sh not found")
-    
-    # Execute start.sh in the background
-    subprocess.Popen(["bash", start_script], cwd=project_path)
-    return {"status": f"Start command issued for {request.project_name}"}
+    docker_compose_path = os.path.join(project_path, "docker-compose.yml")
+
+    if os.path.exists(docker_compose_path):
+        print(f"Using docker-compose to start project {request.project_name}")
+        subprocess.Popen(["docker-compose", "up", "-d"], cwd=project_path)
+        return {"status": f"Docker Compose up command issued for {request.project_name}"}
+    elif os.path.exists(start_script):
+        print(f"Using start.sh for project {request.project_name}")
+        # Execute start.sh in the background
+        subprocess.Popen(["bash", start_script], cwd=project_path)
+        return {"status": f"Start command issued for {request.project_name}"}
+    else:
+        raise HTTPException(status_code=404, detail="start.sh or docker-compose.yml not found")
 
 @app.post("/stop_project", summary="Stop a project by killing its process or stopping its container")
 def stop_project(request: ProjectRequest):
@@ -41,16 +56,23 @@ def stop_project(request: ProjectRequest):
     stop_script = os.path.join(project_path, "stop.sh")
     pid_file = os.path.join(project_path, ".pid")
 
+    docker_compose_path = os.path.join(project_path, "docker-compose.yml")
+
     if not os.path.exists(project_path):
         return {"status": f"Project {request.project_name} not found, nothing to stop."}
 
-    # Priority 1: Use stop.sh if it exists (most specific, good for docker-compose)
-    if os.path.exists(stop_script):
+    # Priority 1: Use docker-compose down if docker-compose.yml exists
+    if os.path.exists(docker_compose_path):
+        print(f"Using docker-compose to stop project {request.project_name}")
+        subprocess.run(["docker-compose", "down"], cwd=project_path, capture_output=True, text=True)
+        return {"status": f"Executed docker-compose down for {request.project_name}"}
+    # Priority 2: Use stop.sh if it exists (most specific, good for docker-compose)
+    elif os.path.exists(stop_script):
         print(f"Using stop.sh for project {request.project_name}")
         subprocess.run(["bash", stop_script], cwd=project_path, capture_output=True, text=True)
         return {"status": f"Executed stop.sh for {request.project_name}"}
 
-    # Priority 2: Use .pid file if it exists (for simple processes or single containers)
+    # Priority 3: Use .pid file if it exists (for simple processes or single containers)
     elif os.path.exists(pid_file):
         print(f"Using .pid file for project {request.project_name}")
         with open(pid_file, 'r') as f:
@@ -77,7 +99,7 @@ def stop_project(request: ProjectRequest):
     
     else:
         # No stop method found
-        raise HTTPException(status_code=404, detail=f"No stop method (stop.sh or .pid) found for project {request.project_name}")
+        raise HTTPException(status_code=404, detail=f"No stop method (stop.sh, docker-compose.yml or .pid) found for project {request.project_name}")
 
 @app.get("/get_logs", summary="Get the logs for a project")
 def get_logs(project_name: str):

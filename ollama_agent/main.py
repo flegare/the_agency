@@ -42,6 +42,11 @@ async def generate(request: GenerateRequest):
     except httpx.ReadTimeout:
         raise HTTPException(status_code=504, detail="Request to Ollama timed out")
 
+@app.get("/health", summary="Health check endpoint")
+def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}
+
 @app.get("/")
 def read_root():
     return {"message": "Ollama Agent is running"}
