@@ -28,8 +28,11 @@ PORT=8000
 PID_FILE=".agent_pids"
 > $PID_FILE # Clear the PID file
 
+AGENT_PORTS_FILE=".agent_ports"
+> $AGENT_PORTS_FILE # Clear the agent ports file
+
 # Find all agent directories (containing requirements.txt)
-for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n'); do
+for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n' | sort); do
     agent_name=$(basename $agent_dir)
     echo -e "🚀 Starting ${YELLOW}$agent_name${NC} on port ${YELLOW}$PORT${NC}..."
 
@@ -38,10 +41,13 @@ for agent_dir in $(find . -mindepth 2 -name requirements.txt -printf '%h\n'); do
     
     # Save the PID
     echo $! >> $PID_FILE
+    # Save agent name and port to the .agent_ports file
+    echo "$agent_name:$PORT" >> $AGENT_PORTS_FILE
 
     # Increment the port for the next agent
     PORT=$((PORT + 1))
 done
+
 
 echo ""
 echo -e "${GREEN}✅ All agents started. Logs are in the 'logs' directory.${NC}"

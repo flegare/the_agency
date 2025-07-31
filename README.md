@@ -12,24 +12,37 @@ The goal of this project is to create a suite of specialized agents that extend 
 - **Ollama Agent:** An agent that can interface with a local Ollama instance.
 - **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks.
 - **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace.
+- **Historian Agent:** An agent that tracks project evolution, actions, and key learnings, and archives useful files for seamless session resumption.
+- **Root Agent:** An agent that orchestrates other agents, providing a unified interface for managing and interacting with the entire suite of agents.
 
 ## Workspace
 
-This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker.
+This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, including Docker-based projects for true environment isolation.
 
 ## Workspace
 
-This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, such as Docker and Firebase.
+This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, including Docker-based projects for true environment isolation.
 
 ## Getting Started
 
 To use these agents, you need to have the Gemini CLI installed and configured. You also need to run the agent web services.
 
+### Running Python-based Agents
+
 1.  Clone this repository.
 2.  Install the dependencies for all agents: `pip install -r file_analyzer_agent/requirements.txt && pip install -r web_surfer_agent/requirements.txt && pip install -r ollama_agent/requirements.txt`
 3.  Run the `start_agents.sh` script to launch all agents: `./scripts/start_agents.sh`
-4.  The agents will be running on ports 8000 and 8001.
-5.  To make the agents available as tools, copy their OpenAPI specifications to the `.gemini/tools/` directory.
+4.  The agents will be running on ports starting from 8000.
+
+### Running Dockerized Agents
+
+1.  Ensure Docker is installed and running on your system.
+2.  Run the `start_dockerized_agents.sh` script to build and launch all Dockerized agents: `./scripts/start_dockerized_agents.sh`
+3.  The agents will be running in Docker containers, accessible on ports starting from 8000.
+
+### General Setup
+
+To make the agents available as tools, copy their OpenAPI specifications to the `.gemini/tools/` directory.
 
 ## Session Management
 
