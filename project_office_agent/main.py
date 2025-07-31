@@ -62,6 +62,11 @@ async def generate_project_brief(project: ProjectAbstract):
     except KeyError as e:
         return { "error": "Missing key in LLM response", "details": str(e), "response": content }
 
+@app.get("/health", summary="Health check endpoint")
+def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}
+
 @app.get("/")
 async def read_root():
     return {"message": "Project Office Agent is running"}

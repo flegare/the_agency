@@ -60,6 +60,11 @@ def generate_name(project: ProjectDescription):
     except KeyError as e:
         return { "error": "Missing key in LLM response", "details": str(e), "response": content }
 
+@app.get("/health", summary="Health check endpoint")
+def health_check() -> dict:
+    """Returns a success message to indicate that the agent is running."""
+    return {"status": "ok"}
+
 @app.get("/")
 def read_root():
     return {"message": "Name Generator Agent is running"}
