@@ -12,6 +12,14 @@
 - [X] Test Firebase project creation and deployment.
 - [X] Create Secret Manager Agent.
 - [X] Create Ollama Agent.
-- [ ] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
+- [X] Create Historian Agent.
+- [X] Adapt Coder Agent output handling to use curl wrapper for Ollama API.
+- [X] **High Priority:** Re-architect project creation to use Docker for true environment isolation.
+- [X] Create a "root agent" to orchestrate other agents.
+- [X] Dockerize all agents and create management scripts.
 - [ ] Add more agents to the project.
-- [ ] Create a "root agent" to orchestrate other agents.
+- [ ] Create a Security Agent.
+- [ ] Create a Database Agent.
+- [ ] Create a Deployment Agent.
+- [ ] Create a Monitoring Agent.
+- [X] Create a Documentation Agent.
