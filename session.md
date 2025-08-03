@@ -15,8 +15,13 @@
 - Created `Dockerfile`s for all agents.
 - Developed new scripts (`start_dockerized_agents.sh`, `stop_dockerized_agents.sh`, `restart_dockerized_agents.sh`) to manage Dockerized agents.
 - Successfully started and tested all Dockerized agents, including inter-agent communication via the Root Agent.
+- Implemented the Documentation Agent.
+- Implemented the Project Shipper Agent.
+- Implemented the Frontend Developer Agent.
+- Fixed and made functional the `parallel_start_dockerized_agents.sh` script.
 
 ## Next Steps
 
-- All agents are now Dockerized, and new management scripts are available. You can test this functionality.
+- All agents are now Dockerized, and new management scripts are available.
+- The `parallel_start_dockerized_agents.sh` script is now functional for parallel agent launching.
 - Proceed with the next task in the project, which is to "Add more agents to the project."

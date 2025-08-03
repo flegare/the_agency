@@ -1,0 +1,49 @@
+# Project Checkpoint - July 26, 2025
+
+This checkpoint summarizes the progress made on building the virtual IT department agents.
+
+## Overall Project Goal:
+To create a collection of specialized, independent agents that extend the Gemini CLI's capabilities, mimicking a virtual IT department.
+
+## Agents Developed and Their Status:
+
+1.  **Name Generator Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Generates project name suggestions and taglines using the `deepseek-r1` Ollama model.
+
+2.  **Project Office Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Generates detailed project briefs (objectives, success criteria, high-level features) from an abstract description using an LLM.
+
+3.  **Solution Architect Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Generates detailed solution approaches (technical approach, high-level stories, testing strategy) from a project brief using an LLM.
+
+4.  **Tester Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Generates detailed test plans (objectives, scope, strategy, cases, environment, tools) from a solution approach using an LLM.
+
+5.  **Secret Manager Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Manages secrets securely using Google Cloud Secret Manager. Can create secret containers, add new versions with values, and retrieve secret values.
+    *   **Note:** Requires Google Secret Manager API to be enabled and proper IAM permissions.
+
+6.  **Secure Executor Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Acts as an intermediary to securely inject secret values (retrieved from Secret Manager Agent) as environment variables into commands before execution. This prevents the LLM from directly seeing secret content.
+
+7.  **Google Drive Agent:**
+    *   **Status:** Partially functional (read operations work, write operations blocked).
+    *   **Capabilities:** Can list files in Google Drive (including specific folders) and read content of text-based files. Can create folders.
+    *   **Current Blocker:** Write operations (e.g., `create_text_file`) consistently fail with "The user's Drive storage quota has been exceeded" error from Google Drive API, despite confirmation that the drive is not full. This is an external Google Drive configuration/permission issue, not a bug in the agent's code.
+
+8.  **Coder Agent:**
+    *   **Status:** Functional.
+    *   **Capabilities:** Generates code based on high-level stories, context, and task descriptions using an LLM.
+    *   **Recent Enhancement:** Now uses a Python `curl` wrapper to interact with the Ollama API, handling streamed responses and saving generated output to a temporary file within its own directory (`coder_agent/tmp/`) to ensure complete response capture and avoid streaming issues.
+
+## Current Task:
+Completed the refinement of the Coder Agent's output handling.
+
+## Next Steps:
+You can review this summary. When you're ready to resume, we can continue working on the next task, or address any other tasks you deem necessary.
