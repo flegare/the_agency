@@ -19,6 +19,7 @@
 - Implemented the Project Shipper Agent.
 - Implemented the Frontend Developer Agent.
 - Fixed and made functional the `parallel_start_dockerized_agents.sh` script.
+- Created `check_agent_status.sh` script to verify agent health.
 
 ## Next Steps
 
