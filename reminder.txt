@@ -1,0 +1,7 @@
+To load the latest session context and get caught up on the project, run the following command:
+
+./scripts/load_session_context.sh
+
+Make sure all agents are running first by executing:
+
+./scripts/start_agents.sh

@@ -4,7 +4,7 @@
 - [X] Implement session resume mechanic.
 - [X] Formalize the development process (Virtual IT Team).
 - [X] Add Web Surfer Agent.
-- [X] Create agent launcher script.
+- [X] Create agent launcher script (parallel launcher now functional).
 - [X] Create Workspace Manager Agent.
 - [X] Test Docker project creation.
 - [X] Implement Cyclic Error Watchdog protocol.
@@ -23,3 +23,5 @@
 - [ ] Create a Deployment Agent.
 - [ ] Create a Monitoring Agent.
 - [X] Create a Documentation Agent.
+- [X] Create a Project Shipper Agent.
+- [X] Create a Frontend Developer Agent.
