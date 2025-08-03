@@ -5,6 +5,7 @@
 - [X] Formalize the development process (Virtual IT Team).
 - [X] Add Web Surfer Agent.
 - [X] Create agent launcher script (parallel launcher now functional).
+- [X] Create agent status check script.
 - [X] Create Workspace Manager Agent.
 - [X] Test Docker project creation.
 - [X] Implement Cyclic Error Watchdog protocol.
