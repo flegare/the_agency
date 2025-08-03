@@ -17,7 +17,7 @@ if [ -n "$ROOT_AGENT_DIR" ]; then
     echo -e "Building image ${YELLOW}$image_name${NC}"
     docker build -t "$image_name" "$ROOT_AGENT_DIR"
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping.${NC}"
+        echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping. Check logs/${agent_name}.log for details.${NC}"
     else
         # Construct AGENT_HOSTS for root_agent using the collected ports
         AGENT_HOSTS=""
@@ -28,7 +28,7 @@ if [ -n "$ROOT_AGENT_DIR" ]; then
         # Find an available port for the root agent
         CURRENT_ROOT_PORT=$(find_available_port $PORT)
         if [ -z "$CURRENT_ROOT_PORT" ]; then
-            echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping.${NC}"
+            echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping. Check logs/${agent_name}.log for details.${NC}"
         else
             PORT=$CURRENT_ROOT_PORT # Update PORT for the next search (though root is last)
 
@@ -39,11 +39,11 @@ if [ -n "$ROOT_AGENT_DIR" ]; then
             # Wait for root agent to finish launching and check health
             wait $ROOT_AGENT_PID
             if [ $? -ne 0 ]; then
-                echo -e "${RED}Error: Docker container failed to launch for $agent_name. Check logs.${NC}"
+                echo -e "${RED}Error: Docker container failed to launch for $agent_name. Check logs/${agent_name}.log for details.${NC}"
             else
                 container_id=$(docker ps -aq -f name=^/${agent_name}-dockerized$)
                 if [ -z "$container_id" ]; then
-                    echo -e "${RED}Error: Container for $agent_name not found after launch. Check Docker logs.${NC}"
+                    echo -e "${RED}Error: Container for $agent_name not found after launch. Check logs/${agent_name}.log for details.${NC}"
                 else
                     echo "$container_id" >> $CONTAINER_IDS_FILE
                     echo "$agent_name:$CURRENT_ROOT_PORT" >> $AGENT_PORTS_FILE
