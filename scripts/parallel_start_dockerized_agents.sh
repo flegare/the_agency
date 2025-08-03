@@ -65,4 +65,5 @@ if [ -n "$ROOT_AGENT_DIR" ]; then
 fi
 
 
-echo -e "\n${GREEN}✅ All Dockerized agents processed. Check logs for details.${NC}"
+echo -e "
+${GREEN}✅ All Dockerized agents processed. Check logs in /home/cortex/agents_tools/logs for details.${NC}"
