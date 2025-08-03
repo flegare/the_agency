@@ -33,8 +33,22 @@ if [ -n "$ROOT_AGENT_DIR" ]; then
             PORT=$CURRENT_ROOT_PORT # Update PORT for the next search (though root is last)
 
             echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$CURRENT_ROOT_PORT${NC}...\n"
-            docker run -d --network $NETWORK_NAME -p ${CURRENT_ROOT_PORT}:8000 $AGENT_HOSTS --name "$container_name" "$image_name" > /dev/null 2>&1 &
-            ROOT_AGENT_PID=$! # Store PID of the docker run command
+            docker run -d --network $NETWORK_NAME -p ${CURRENT_PORT}:8000 --name "$container_name" "$image_name" > "logs/${agent_name}.log" 2>&1 &
+    LAUNCHED_PIDS["$agent_name"]=$! # Store PID of the docker run command
+
+    # Give Docker a moment to start the container
+    sleep 2
+
+    # Check if the container is actually running
+    if [ "$(docker ps -q -f name=^/${container_name}$)" ]; then
+        echo -e "${GREEN}Container ${container_name} is running.${NC}"
+    else
+        echo -e "${RED}Container ${container_name} failed to start. Check logs/${agent_name}.log for details.${NC}"
+        # Attempt to get logs if container exited immediately
+        docker logs "$container_name" >> "logs/${agent_name}.log"
+        unset LAUNCHED_PIDS["$agent_name"]
+        continue
+    fi
 
             # Wait for root agent to finish launching and check health
             wait $ROOT_AGENT_PID
