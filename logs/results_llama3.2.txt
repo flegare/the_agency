@@ -1,8 +1,0 @@
---- Test Results for llama3.2 ---
-Time taken: 2.42 seconds
-Generated Suggestions:
-1. Name: HydraMate, Tagline: Your constant companion for hydration
-2. Name: WaterLog, Tagline: Track your water, take control of your day
-3. Name: DrinkUp, Tagline: Drink more, live better
-4. Name: AquaMind, Tagline: Stay hydrated, stay focused
-5. Name: HydratePro, Tagline: Unlock your hydration potential
