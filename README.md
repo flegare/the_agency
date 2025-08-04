@@ -37,8 +37,10 @@ To use these agents, you need to have the Gemini CLI installed and configured. Y
 ### Running Dockerized Agents
 
 1.  Ensure Docker is installed and running on your system.
-2.  Run the `start_dockerized_agents.sh` script to build and launch all Dockerized agents: `./scripts/start_dockerized_agents.sh`
-3.  The agents will be running in Docker containers, accessible on ports starting from 8000.
+2.  **Configure Agents:** Edit `scripts/agents.conf` to uncomment the agent directories you wish to launch.
+3.  Run the `parallel_start_dockerized_agents.sh` script to build and launch the configured Dockerized agents: `./scripts/parallel_start_dockerized_agents.sh`
+4.  The agents will be running in Docker containers, accessible on automatically assigned ports starting from 8000.
+5.  To check the status of running agents, use: `./scripts/check_agent_status.sh`
 
 ### General Setup
 
