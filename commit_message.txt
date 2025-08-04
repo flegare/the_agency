@@ -1,7 +1,6 @@
-feat: Enable and document Secure Executor Agent
+feat: Enable and document Web Surfer Agent
 
-- Enabled `secure_executor_agent` by uncommenting it in `scripts/agents.conf`.
-- Created a basic health check test for `secure_executor_agent` at `tests/test_secure_executor_agent.py`.
-- Created detailed documentation for `secure_executor_agent` at `docs/agents/tools/secure_executor_agent.md`.
-- Updated `README.md` to link to the new `secure_executor_agent` documentation.
-- Resolved recurring port conflict issues by ensuring all `gemini-agent-` containers are stopped and removed before restarting.
+- Enabled `web_surfer_agent` by uncommenting it in `scripts/agents.conf`.
+- Created a basic health check test for `web_surfer_agent` at `tests/test_web_surfer_agent.py`.
+- Created detailed documentation for `web_surfer_agent` at `docs/agents/tools/web_surfer_agent.md`.
+- Updated `README.md` to link to the new `web_surfer_agent` documentation.
