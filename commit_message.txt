@@ -1,7 +1,7 @@
-feat: Enable and document Ollama Agent
+feat: Enable and document Secret Manager Agent
 
-- Enabled `ollama_agent` by uncommenting it in `scripts/agents.conf`.
-- Created a basic health check test for `ollama_agent` at `tests/test_ollama_agent.py`.
-- Created detailed documentation for `ollama_agent` at `docs/agents/tools/ollama_agent.md`.
-- Updated `README.md` to link to the new `ollama_agent` documentation.
-- Resolved port conflict issue by stopping external Ollama container.
+- Enabled `secret_manager_agent` by uncommenting it in `scripts/agents.conf`.
+- Created a basic health check test for `secret_manager_agent` at `tests/test_secret_manager_agent.py`.
+- Created detailed documentation for `secret_manager_agent` at `docs/agents/tools/secret_manager_agent.md`.
+- Updated `README.md` to link to the new `secret_manager_agent` documentation.
+- Resolved port conflict issue by explicitly stopping all `gemini-agent-` containers before restarting.
