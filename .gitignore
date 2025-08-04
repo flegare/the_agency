@@ -8,3 +8,5 @@ screenshots/
 .agent_ports_dockerized
 .venv_test/
 archive_payload.py
+.container_ids_dockerized
+logs/
