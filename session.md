@@ -20,9 +20,13 @@
 - Implemented the Frontend Developer Agent.
 - Fixed and made functional the `parallel_start_dockerized_agents.sh` script.
 - Created `check_agent_status.sh` script to verify agent health.
+- Implemented agent directory refactoring and categorization, organizing agents into `agents/<theme>/<agent_name>` structure.
+- Updated `scripts/agents.conf`, `scripts/parallel_start_dockerized_agents.sh`, `scripts/stop_dockerized_agents.sh`, `scripts/restart_dockerized_agents.sh`, and `agents/core/root_agent/main.py` to reflect the new structure.
+- Updated `README.md` and created `docs/agent_structure.md` for documentation.
 
 ## Next Steps
 
 - All agents are now Dockerized, and new management scripts are available.
 - The `parallel_start_dockerized_agents.sh` script is now functional for parallel agent launching.
+- The agent directory structure has been refactored and categorized for better organization.
 - Proceed with the next task in the project, which is to "Add more agents to the project."
