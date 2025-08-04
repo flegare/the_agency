@@ -48,25 +48,16 @@ fi
 
 
 
-# --- Agent Directories ---
-AGENT_DIRS=(
-    "/home/cortex/agents_tools/coder_agent"
-    "/home/cortex/agents_tools/documentation_agent"
-    "/home/cortex/agents_tools/file_analyzer_agent"
-    "/home/cortex/agents_tools/frontend_developer_agent"
-    "/home/cortex/agents_tools/google_drive_agent"
-    "/home/cortex/agents_tools/historian_agent"
-    "/home/cortex/agents_tools/name_generator_agent"
-    "/home/cortex/agents_tools/ollama_agent"
-    "/home/cortex/agents_tools/project_office_agent"
-    "/home/cortex/agents_tools/project_shipper_agent"
-    "/home/cortex/agents_tools/secret_manager_agent"
-    "/home/cortex/agents_tools/secure_executor_agent"
-    "/home/cortex/agents_tools/solution_architect_agent"
-    "/home/cortex/agents_tools/tester_agent"
-    "/home/cortex/agents_tools/web_surfer_agent"
-    "/home/cortex/agents_tools/workspace_manager_agent"
-)
+# --- Agent Directories (read from config file) ---
+AGENT_CONFIG_FILE="/home/cortex/agents_tools/scripts/agents.conf"
+AGENT_DIRS=()
+while IFS= read -r line; do
+    # Skip comments and empty lines
+    if [[ ! "$line" =~ ^# && -n "$line" ]]; then
+        AGENT_DIRS+=("$line")
+    fi
+done < "$AGENT_CONFIG_FILE"
+
 ROOT_AGENT_DIR="/home/cortex/agents_tools/root_agent"
 
 declare -A AGENT_PORTS_MAP
