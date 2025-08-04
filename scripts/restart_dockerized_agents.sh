@@ -16,4 +16,4 @@ echo ""
 ./scripts/stop_dockerized_agents.sh
 
 # Start all agents
-./scripts/start_dockerized_agents.sh
+./scripts/parallel_start_dockerized_agents.sh
