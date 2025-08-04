@@ -6,14 +6,42 @@ This repository contains a collection of agents that can be used as tools by the
 
 The goal of this project is to create a suite of specialized agents that extend the capabilities of the Gemini CLI. Each agent is a small, independent web service that exposes its functionality through an OpenAPI specification. The Gemini CLI can discover and use these agents as tools.
 
+## Agent Directory Structure
+
+To improve organization and maintainability, agents are now categorized and located within a new `agents/` directory at the project root. The structure follows `agents/<theme>/<agent_name>`, where themes group agents by their primary function or role.
+
+The current themes are:
+
+*   **`core`**: Agents fundamental to the CLI's operation or orchestration.
+*   **`tools`**: Agents that provide specific, often atomic, utility functions.
+*   **`roles`**: Agents that embody a specific role or function within a software development lifecycle.
+
 ## Agents
 
-- **File Analyzer Agent:** A simple agent that can perform basic analysis on files, such as counting lines.
-- **Ollama Agent:** An agent that can interface with a local Ollama instance.
-- **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks.
-- **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace.
-- **Historian Agent:** An agent that tracks project evolution, actions, and key learnings, and archives useful files for seamless session resumption.
-- **Root Agent:** An agent that orchestrates other agents, providing a unified interface for managing and interacting with the entire suite of agents.
+Here's a categorized list of the agents in this repository:
+
+### Core Agents
+*   **Root Agent:** An agent that orchestrates other agents, providing a unified interface for managing and interacting with the entire suite of agents. (Located in `agents/core/root_agent`)
+
+### Tool Agents
+*   **File Analyzer Agent:** A simple agent that can perform basic analysis on files, such as counting lines. (Located in `agents/tools/file_analyzer_agent`)
+*   **Google Drive Agent:** An agent for interacting with Google Drive services. (Located in `agents/tools/google_drive_agent`)
+*   **Name Generator Agent:** An agent that can generate names. (Located in `agents/tools/name_generator_agent`)
+*   **Ollama Agent:** An agent that can interface with a local Ollama instance. ([Documentation](docs/agents/tools/ollama_agent.md)) (Located in `agents/tools/ollama_agent`)
+*   **Secret Manager Agent:** Manages secrets and sensitive information. (Located in `agents/tools/secret_manager_agent`)
+*   **Secure Executor Agent:** Acts as an intermediary to securely inject secret values into commands before execution. (Located in `agents/tools/secure_executor_agent`)
+*   **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks. (Located in `agents/tools/web_surfer_agent`)
+
+### Role Agents
+*   **Coder Agent:** An agent focused on writing and modifying code. (Located in `agents/roles/coder_agent`)
+*   **Documentation Agent:** An agent for generating and managing documentation. (Located in `agents/roles/documentation_agent`)
+*   **Frontend Developer Agent:** An agent specialized in frontend development tasks. (Located in `agents/roles/frontend_developer_agent`)
+*   **Historian Agent:** An agent that tracks project evolution, actions, and key learnings, and archives useful files for seamless session resumption. (Located in `agents/roles/historian_agent`)
+*   **Project Office Agent:** An agent for project management and coordination tasks. (Located in `agents/roles/project_office_agent`)
+*   **Project Shipper Agent:** An agent responsible for preparing and shipping projects. (Located in `agents/roles/project_shipper_agent`)
+*   **Solution Architect Agent:** An agent for designing and planning technical solutions. (Located in `agents/roles/solution_architect_agent`)
+*   **Tester Agent:** An agent focused on testing and quality assurance. (Located in `agents/roles/tester_agent`)
+*   **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace. (Located in `agents/roles/workspace_manager_agent`)
 
 ## Workspace
 
