@@ -58,7 +58,7 @@ while IFS= read -r line; do
     fi
 done < "$AGENT_CONFIG_FILE"
 
-ROOT_AGENT_DIR="/home/cortex/agents_tools/root_agent"
+ROOT_AGENT_DIR="/home/cortex/agents_tools/agents/core/root_agent"
 
 declare -A AGENT_PORTS_MAP
 

@@ -32,36 +32,7 @@ fi
 
 # Also try to stop any containers with the naming convention
 echo -e "Attempting to stop any remaining 'gemini-agent-' containers..."
-docker ps -a --filter "name=coder_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=coder_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=file_analyzer_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=file_analyzer_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=google_drive_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=google_drive_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=historian_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=historian_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=name_generator_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=name_generator_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=ollama_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=ollama_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=project_office_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=project_office_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=root_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=root_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=secret_manager_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=secret_manager_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=secure_executor_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=secure_executor_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=solution_architect_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=solution_architect_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=python-flask-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=python-flask-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=tester_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=tester_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=web_surfer_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=web_surfer_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
-docker ps -a --filter "name=workspace_manager_agent-dockerized" --format "{{.ID}}" | xargs -r docker stop > /dev/null 2>&1
-docker ps -a --filter "name=workspace_manager_agent-dockerized" --format "{{.ID}}" | xargs -r docker rm > /dev/null 2>&1
+
 
 
 # Clean up the agent_ports_dockerized file

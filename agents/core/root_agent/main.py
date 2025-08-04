@@ -10,7 +10,7 @@ app = FastAPI(
     version="1.0.0",
 )
 
-AGENT_PORTS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".agent_ports")
+AGENT_PORTS_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), ".agent_ports_dockerized")
 
 class AgentCallRequest(BaseModel):
     agent_name: str
