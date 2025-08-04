@@ -29,7 +29,7 @@ Here's a categorized list of the agents in this repository:
 *   **Name Generator Agent:** An agent that can generate names. (Located in `agents/tools/name_generator_agent`)
 *   **Ollama Agent:** An agent that can interface with a local Ollama instance. ([Documentation](docs/agents/tools/ollama_agent.md)) (Located in `agents/tools/ollama_agent`)
 *   **Secret Manager Agent:** Manages secrets and sensitive information. ([Documentation](docs/agents/tools/secret_manager_agent.md)) (Located in `agents/tools/secret_manager_agent`)
-*   **Secure Executor Agent:** Acts as an intermediary to securely inject secret values into commands before execution. (Located in `agents/tools/secure_executor_agent`)
+*   **Secure Executor Agent:** Acts as an intermediary to securely inject secret values into commands before execution. ([Documentation](docs/agents/tools/secure_executor_agent.md)) (Located in `agents/tools/secure_executor_agent`)
 *   **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks. (Located in `agents/tools/web_surfer_agent`)
 
 ### Role Agents
