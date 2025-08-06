@@ -1,8 +1,10 @@
+import os
 from fastapi import FastAPI
 from pydantic import BaseModel
 import ollama
 import json
 import re
+import sys
 
 app = FastAPI()
 
@@ -26,15 +28,20 @@ def generate_name(project: ProjectDescription):
     JSON Output:
     """
 
-    response = ollama.chat(
-        model="deepseek-r1", # Or any other model you have available
-        messages=[
-            {
-                'role': 'user',
-                'content': prompt,
-            },
-        ],
-    )
+    try:
+        # host.docker.internal is a special DNS name that resolves to the host's IP address
+        client = ollama.Client(host='http://host.docker.internal:11434')
+        response = client.chat(
+            model="deepseek-r1", # Or any other model you have available
+            messages=[
+                {
+                    'role': 'user',
+                    'content': prompt,
+                },
+            ],
+        )
+    except Exception as e:
+        return { "error": "Failed to connect to Ollama", "details": str(e) }
     
     content = response['message']['content']
 
@@ -59,6 +66,11 @@ def generate_name(project: ProjectDescription):
         return { "error": "Failed to parse extracted JSON", "details": str(e), "response": content }
     except KeyError as e:
         return { "error": "Missing key in LLM response", "details": str(e), "response": content }
+
+
+
+
+
 
 @app.get("/health", summary="Health check endpoint")
 def health_check() -> dict:

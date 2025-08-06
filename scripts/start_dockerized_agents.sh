@@ -30,24 +30,17 @@ wait_for_health_check() {
     return 1
 }
 
-# Function to find an available port
-find_available_port() {
-    local start_port=$1
-    local current_port=$start_port
-    while true; do
-        if ! lsof -i :$current_port -t > /dev/null; then
-            echo $current_port
-            return 0
-        fi
-        current_port=$((current_port + 1))
-    done
-}
-
 # --- Banner ---
+# Define colors for output
+GREEN="\033[32m"
+YELLOW="\033[33m"
+RED="\033[31m"
+NC="\033[0m" # No Color
+
 echo -e "${GREEN}###################################${NC}"
 echo -e "${GREEN}#                                 #${NC}"
 echo -e "${GREEN}#     STARTING DOCKERIZED AGENTS  #${NC}"
-echo -e "#                                 #${NC}"
+echo -e "${GREEN}#                                 #${NC}"
 echo -e "${GREEN}###################################${NC}"
 echo ""
 
@@ -71,9 +64,6 @@ if ! docker network inspect $NETWORK_NAME >/dev/null 2>&1; then
     docker network create $NETWORK_NAME > /dev/null
 fi
 
-# Base port for agents
-PORT=7999
-
 # File to store container IDs
 CONTAINER_IDS_FILE=".agent_container_ids"
 > $CONTAINER_IDS_FILE # Clear the file
@@ -82,33 +72,21 @@ CONTAINER_IDS_FILE=".agent_container_ids"
 AGENT_PORTS_FILE=".agent_ports_dockerized"
 > $AGENT_PORTS_FILE # Clear the file
 
-# Collect all agent directories, separating the root_agent
-ALL_AGENT_DIRS=()
-ROOT_AGENT_DIR=""
+# Associative array to store agent_name:port
+declare -A AGENT_PORTS_MAP
 
-# Collect all agent directories
-AGENT_DIRS_RAW=$(find . -mindepth 2 -name Dockerfile -printf '%h\n' | sort)
-
-# Filter agent directories based on TARGET_AGENT
-for agent_dir in $AGENT_DIRS_RAW; do
-    agent_name=$(basename $agent_dir)
-    if [ -n "$TARGET_AGENT" ] && [ "$agent_name" != "$TARGET_AGENT" ]; then
+# Read agent configurations from agents.conf
+while IFS= read -r line || [[ -n "$line" ]]; do
+    # Skip comments and empty lines
+    if [[ "$line" =~ ^\s*# ]] || [[ -z "$line" ]]; then
         continue
     fi
 
-    if [ "$agent_name" == "root_agent" ]; then
-        ROOT_AGENT_DIR="$agent_dir"
-    else
-        ALL_AGENT_DIRS+=("$agent_dir")
-    fi
-done
-
-
-declare -A AGENT_PORTS_MAP # Associative array to store agent_name:port
-
-# Process non-root agents first
-for agent_dir in "${ALL_AGENT_DIRS[@]}"; do
-    agent_name=$(basename "$agent_dir")
+    # Parse agent path and port
+    AGENT_PATH=$(echo "$line" | awk '{print $1}')
+    PORT=$(echo "$line" | awk '{print $2}')
+    
+    agent_name=$(basename "$AGENT_PATH")
     image_name="gemini-agent-${agent_name}"
     container_name="${agent_name}-dockerized"
 
@@ -123,99 +101,72 @@ for agent_dir in "${ALL_AGENT_DIRS[@]}"; do
 
     # Build the Docker image
     echo -e "Building image ${YELLOW}$image_name${NC}..."
-    docker build -t "$image_name" "$agent_dir"
+    docker build -t "$image_name" "$AGENT_PATH"
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping.${NC}"
         continue # Skip to next agent if build fails
     fi
 
-    # Find an available port for the current agent
-    CURRENT_PORT=$(find_available_port $PORT)
-    if [ -z "$CURRENT_PORT" ]; then
-        echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping.${NC}"
-        continue
-    fi
     # Run the Docker container
-    echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$CURRENT_PORT${NC}..."
-    container_id=$(docker run -d --network $NETWORK_NAME -p ${CURRENT_PORT}:8000 --name "$container_name" "$image_name")
+    echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$PORT${NC}..."
+    container_id=$(docker run -d --network $NETWORK_NAME -p ${PORT}:8000 --name "$container_name" "$image_name")
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error: Docker container failed to start for $agent_name. Skipping.${NC}"
-        PORT=$((CURRENT_PORT + 1)) # Update PORT even if run fails
         continue # Skip to next agent if run fails
     fi
 
     echo "$container_id" >> $CONTAINER_IDS_FILE
-    echo "$agent_name:$CURRENT_PORT" >> $AGENT_PORTS_FILE
-    AGENT_PORTS_MAP["$agent_name"]="$CURRENT_PORT" # Store agent name and its assigned port
+    echo "$agent_name:$PORT" >> $AGENT_PORTS_FILE
+    AGENT_PORTS_MAP["$agent_name"]="$PORT" # Store agent name and its assigned port
 
-    echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $CURRENT_PORT.${NC}"
-
-    # Give the container a moment to start its internal server
-    sleep 10
+    echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $PORT.${NC}"
 
     # Wait for the agent to be healthy
-    if ! wait_for_health_check "$agent_name" "$CURRENT_PORT"; then
+    if ! wait_for_health_check "$agent_name" "$PORT"; then
         echo -e "${RED}Failed to start ${agent_name}. Continuing with next agent.${NC}"
     fi
-    PORT=$((CURRENT_PORT + 1)) # Update PORT for the next search
-done
+done < "scripts/agents.conf"
 
-# Process root_agent last
-if [ -n "$ROOT_AGENT_DIR" ]; then
-    agent_name=$(basename "$ROOT_AGENT_DIR")
+# Restart root_agent with agent hosts
+if [[ -v AGENT_PORTS_MAP["root_agent"] ]]; then
+    agent_name="root_agent"
+    port=${AGENT_PORTS_MAP["root_agent"]}
     image_name="gemini-agent-${agent_name}"
     container_name="${agent_name}-dockerized"
 
-    echo -e "\n--- Processing ${YELLOW}$agent_name${NC} (Root Agent) ---"
+    echo -e "\n--- Restarting ${YELLOW}$agent_name${NC} with other agent hosts ---"
 
-    # Stop and remove any existing container with the same name
-    if [ "$(docker ps -aq -f name=^/${container_name}$)" ]; then
-        echo "Stopping and removing existing container $container_name..."
-        docker stop "$container_name" > /dev/null
-        docker rm "$container_name" > /dev/null
-    fi
+    # Stop the running root_agent container
+    echo "Stopping existing container $container_name..."
+    docker stop "$container_name" > /dev/null
+    docker rm "$container_name" > /dev/null
 
-    # Build the Docker image
-    echo -e "Building image ${YELLOW}$image_name${NC}..."
-    docker build -t "$image_name" "$ROOT_AGENT_DIR"
+    # Construct AGENT_HOSTS for root_agent using the collected ports
+    AGENT_HOSTS=""
+    for other_agent_name in "${!AGENT_PORTS_MAP[@]}"; do
+        if [ "$other_agent_name" != "root_agent" ]; then
+            AGENT_HOSTS+="-e ${other_agent_name^^}_HOST=http://${other_agent_name}-dockerized:8000 "
+        fi
+    done
+
+    # Run the Docker container
+    echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$port${NC}..."
+    container_id=$(docker run -d --network $NETWORK_NAME -p ${port}:8000 $AGENT_HOSTS --name "$container_name" "$image_name")
     if [ $? -ne 0 ]; then
-        echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping.${NC}"
+        echo -e "${RED}Error: Docker container failed to start for $agent_name.${NC}"
     else
-        # Construct AGENT_HOSTS for root_agent using the collected ports
-        AGENT_HOSTS=""
-        for other_agent_name in "${!AGENT_PORTS_MAP[@]}"; do
-            AGENT_HOSTS+="-e ${other_agent_name^^}_HOST=http://${other_agent_name}-dockerized:${AGENT_PORTS_MAP[$other_agent_name]} "
-        done
+        echo "$container_id" >> $CONTAINER_IDS_FILE
+        echo "$agent_name:$port" >> $AGENT_PORTS_FILE
 
-        # Find an available port for the root agent
-        CURRENT_ROOT_PORT=$(find_available_port $PORT)
-        if [ -z "$CURRENT_ROOT_PORT" ]; then
-            echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping.${NC}"
-        else
-            PORT=$CURRENT_ROOT_PORT # Update PORT for the next search (though root is last)
+        echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $port.${NC}"
 
-            echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$CURRENT_ROOT_PORT${NC}..."
-            container_id=$(docker run -d --network $NETWORK_NAME -p ${CURRENT_ROOT_PORT}:8000 $AGENT_HOSTS --name "$container_name" "$image_name")
-            if [ $? -ne 0 ]; then
-                echo -e "${RED}Error: Docker container failed to start for $agent_name.${NC}"
-            else
-                echo "$container_id" >> $CONTAINER_IDS_FILE
-                echo "$agent_name:$CURRENT_ROOT_PORT" >> $AGENT_PORTS_FILE
-
-                echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $CURRENT_ROOT_PORT.${NC}"
-
-                # Give the container a moment to start its internal server
-                sleep 10
-
-                # Wait for the agent to be healthy
-                if ! wait_for_health_check "$agent_name" "$CURRENT_ROOT_PORT"; then
-                    echo -e "${RED}Failed to start ${agent_name}.${NC}"
-                fi
-            fi
-            PORT=$((CURRENT_ROOT_PORT + 1)) # Update PORT for the next search (though root is last)
+        # Wait for the agent to be healthy
+        if ! wait_for_health_check "$agent_name" "$port"; then
+            echo -e "${RED}Failed to start ${agent_name}.${NC}"
         fi
     fi
 fi
+
 
 
 echo -e "\n${GREEN}✅ All Dockerized agents processed. Check logs for details.${NC}"

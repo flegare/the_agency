@@ -7,19 +7,12 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 MAX_RETRIES=10
 RETRY_DELAY=3
-PORT=8000
+PORT=30000 # Start port for agents
 NETWORK_NAME="gemini-agents-network"
 AGENT_PORTS_FILE=".agent_ports_dockerized"
-CONTAINER_IDS_FILE=".container_ids_dockerized"
+CONTAINER_IDS_FILE="/home/cortex/agents_tools/.agent_container_ids"
+> $CONTAINER_IDS_FILE # Clear the file
 
-# --- Find available port function ---
-find_available_port() {
-    local port=$1
-    while lsof -i:$port > /dev/null; do
-        port=$((port + 1))
-    done
-    echo $port
-}
 
 # --- Health Check Function ---
 wait_for_health_check() {
@@ -46,34 +39,120 @@ if ! docker network ls | grep -q $NETWORK_NAME; then
     docker network create $NETWORK_NAME
 fi
 
-
-
 # --- Agent Directories (read from config file) ---
 AGENT_CONFIG_FILE="/home/cortex/agents_tools/scripts/agents.conf"
-AGENT_DIRS=()
-while IFS= read -r line; do
-    # Skip comments and empty lines
-    if [[ ! "$line" =~ ^# && -n "$line" ]]; then
-        AGENT_DIRS+=("$line")
-    fi
-done < "$AGENT_CONFIG_FILE"
-
-ROOT_AGENT_DIR="/home/cortex/agents_tools/agents/core/root_agent"
-
 declare -A AGENT_PORTS_MAP
 
-for agent_dir in "${AGENT_DIRS[@]}"; do
-    agent_name=$(basename "$agent_dir")
+while IFS= read -r line || [[ -n "$line" ]]; do
+    # Skip comments and empty lines
+    if [[ "$line" =~ ^\s*# ]] || [[ -z "$line" ]]; then
+        continue
+    fi
+
+    # Parse agent path and port
+    AGENT_PATH=$(echo "$line" | awk '{print $1}')
+    PORT=$(echo "$line" | awk '{print $2}')
+    
+    agent_name=$(basename "$AGENT_PATH")
     image_name="gemini-agent-${agent_name}"
     container_name="${agent_name}-dockerized"
 
     echo -e "\n--- Processing ${YELLOW}${agent_name}${NC} ---"
 
     # Stop and remove any existing container with the same name
-    if [ "$(docker ps -aq -f name=^\/${container_name}$)" ]; then
+    if [ "$(docker ps -aq -f name=^/${container_name}$)" ]; then
         echo "Stopping and removing existing container $container_name..."
         docker stop "$container_name" > /dev/null
         docker rm "$container_name" > /dev/null
+        sleep 3 # Give OS time to release port
+    fi
+
+    # Build the Docker image
+    echo -e "Building image ${YELLOW}$image_name${NC}"
+    docker build -t "$image_name" "$AGENT_PATH"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping. Check logs/${agent_name}.log for details.${NC}"
+    else
+        AGENT_PORTS_MAP[$agent_name]=$PORT
+
+        # Attempt to run the container with retries
+        run_attempts=0
+        container_id=""
+        while [ "$run_attempts" -lt 5 ]; do
+            run_attempts=$((run_attempts + 1))
+            echo -e "Attempt ${run_attempts}/5: Running command: docker run -d --network \"$NETWORK_NAME\" -p \"${PORT}:8000\" --name \"$container_name\" \"$image_name\""
+            
+            # Try to run the container, capture its ID or error
+            if [ "$agent_name" == "name_generator_agent" ]; then
+                # Use --add-host to make host.docker.internal resolve to the host's gateway
+                container_id=$(docker run -d --network "$NETWORK_NAME" -p "${PORT}:8000" --add-host=host.docker.internal:host-gateway --name "$container_name" "$image_name" 2>&1)
+            else
+                container_id=$(docker run -d --network "$NETWORK_NAME" -p "${PORT}:8000" --name "$container_name" "$image_name" 2>&1)
+            fi
+            run_status=$?
+            run_status=$?
+
+            echo "Docker run exit status: $run_status"
+            echo "Docker run raw output \(container_id or error\): $container_id"
+
+            # Give Docker a moment to start the container
+            sleep 5
+
+            if [ "$run_status" -eq 0 ] && [ -n "$container_id" ] && docker ps -q --filter "id=$container_id" > /dev/null; then
+                echo -e "${GREEN}Container ${container_name} is running.${NC}\n"
+                break # Container started successfully
+            else
+                echo -e "${RED}Container ${container_name} failed to start on attempt ${run_attempts}. Retrying... Check logs/${agent_name}.log for details.${NC}\n"
+                # Output docker run error to log
+                echo "Docker run output (attempt ${run_attempts}): ${container_id}" >> "logs/${agent_name}.log"
+                # Clean up any partially created container
+                docker rm "$container_name" > /dev/null 2>&1 || true # Use || true to prevent script from exiting if rm fails
+                sleep 2 # Wait before retrying
+            fi
+        done
+
+        if [ "$run_attempts" -eq 5 ] && [ -z "$container_id" ]; then
+            echo -e "${RED}Error: Container ${container_name} failed to start after multiple retries. Skipping. Check logs/${agent_name}.log for details.${NC}\n"
+            continue # Skip to next agent
+        fi
+
+        # This block is executed only if container_started is true (from the break above)
+        if [ -z "$container_id" ]; then # This check should ideally not be needed if break works
+            echo -e "${RED}Error: Container for $agent_name not found after launch. Check logs/${agent_name}.log for details.${NC}"
+        else
+            echo "$container_id" >> $CONTAINER_IDS_FILE
+            echo "$agent_name:$PORT" >> $AGENT_PORTS_FILE
+
+            echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $PORT.${NC}"
+
+            # Wait for the agent to be healthy
+            if ! wait_for_health_check "$agent_name" "$PORT"; then
+                echo -e "${RED}Failed to start ${agent_name}.${NC}"
+                # Attempt to get logs if container exited immediately
+                docker logs "$container_name" >> "logs/${agent_name}.log"
+            fi
+        fi
+    fi
+done < "$AGENT_CONFIG_FILE"
+
+
+
+# Process root_agent last
+if [[ -v AGENT_PORTS_MAP["root_agent"] ]]; then
+    agent_name="root_agent"
+    port=${AGENT_PORTS_MAP["root_agent"]}
+    agent_dir="/home/cortex/agents_tools/agents/core/root_agent"
+    image_name="gemini-agent-${agent_name}"
+    container_name="${agent_name}-dockerized"
+
+    echo -e "\n--- Processing ${YELLOW}${agent_name}${NC} (Root Agent) ---"
+
+    # Stop and remove any existing container with the same name
+    if [ "$(docker ps -aq -f name=^/${container_name}$)" ]; then
+        echo "Stopping and removing existing container $container_name..."
+        docker stop "$container_name" > /dev/null
+        docker rm "$container_name" > /dev/null
+        sleep 3 # Give OS time to release port
     fi
 
     # Build the Docker image
@@ -82,119 +161,67 @@ for agent_dir in "${AGENT_DIRS[@]}"; do
     if [ $? -ne 0 ]; then
         echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping. Check logs/${agent_name}.log for details.${NC}"
     else
-        # Find an available port for the agent
-        CURRENT_PORT=$(find_available_port $PORT)
-        if [ -z "$CURRENT_PORT" ]; then
-            echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping. Check logs/${agent_name}.log for details.${NC}"
-        else
-            PORT=$((CURRENT_PORT + 1))
-            AGENT_PORTS_MAP[$agent_name]=$CURRENT_PORT
-
-            echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$CURRENT_PORT${NC}...\n"
-            docker run -d --network $NETWORK_NAME -p ${CURRENT_PORT}:8000 --name "$container_name" "$image_name" > "logs/${agent_name}.log" 2>&1
-
-            # Give Docker a moment to start the container
-            sleep 2
-
-            # Check if the container is actually running
-            if [ "$(docker ps -q -f name=^\/${container_name}$)" ]; then
-                echo -e "${GREEN}Container ${container_name} is running.${NC}"
-            else
-                echo -e "${RED}Container ${container_name} failed to start. Check logs/${agent_name}.log for details.${NC}"
-                # Attempt to get logs if container exited immediately
-                docker logs "$container_name" >> "logs/${agent_name}.log"
-            fi
-
-            container_id=$(docker ps -aq -f name=^/${agent_name}-dockerized$)
-            if [ -z "$container_id" ]; then
-                echo -e "${RED}Error: Container for $agent_name not found after launch. Check logs/${agent_name}.log for details.${NC}"
-            else
-                echo "$container_id" >> $CONTAINER_IDS_FILE
-                echo "$agent_name:$CURRENT_PORT" >> $AGENT_PORTS_FILE
-
-                echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $CURRENT_PORT.${NC}"
-
-                # Wait for the agent to be healthy
-                if ! wait_for_health_check "$agent_name" "$CURRENT_PORT"; then
-                    echo -e "${RED}Failed to start ${agent_name}.${NC}"
-                    # Attempt to get logs if container exited immediately
-                    docker logs "$container_name" >> "logs/${agent_name}.log"
-                fi
-            fi
-        fi
-    fi
-done
-
-
-# Process root_agent last
-if [ -n "$ROOT_AGENT_DIR" ]; then
-    agent_name=$(basename "$ROOT_AGENT_DIR")
-    image_name="gemini-agent-${agent_name}"
-    container_name="${agent_name}-dockerized"
-
-    echo -e "\n--- Processing ${YELLOW}${agent_name}${NC} (Root Agent) ---"
-
-    # Stop and remove any existing container with the same name
-    if [ "$(docker ps -aq -f name=^\/${container_name}$)" ]; then
-        echo "Stopping and removing existing container $container_name..."
-        docker stop "$container_name" > /dev/null
-        docker rm "$container_name" > /dev/null
-    fi
-
-    # Build the Docker image
-    echo -e "Building image ${YELLOW}$image_name${NC}"
-    docker build -t "$image_name" "$ROOT_AGENT_DIR"
-    if [ $? -ne 0 ]; then
-        echo -e "${RED}Error: Docker image build failed for $agent_name. Skipping. Check logs/${agent_name}.log for details.${NC}"
-    else
         # Construct AGENT_HOSTS for root_agent using the collected ports
         AGENT_HOSTS=""
         for other_agent_name in "${!AGENT_PORTS_MAP[@]}"; do
-            AGENT_HOSTS+="-e ${other_agent_name^^}_HOST=http://${other_agent_name}-dockerized:${AGENT_PORTS_MAP[$other_agent_name]} "
+            if [ "$other_agent_name" != "root_agent" ]; then
+                AGENT_HOSTS+="-e ${other_agent_name^^}_HOST=http://${other_agent_name}-dockerized:8000 "
+            fi
         done
 
-        # Find an available port for the root agent
-        CURRENT_ROOT_PORT=$(find_available_port $PORT)
-        if [ -z "$CURRENT_ROOT_PORT" ]; then
-            echo -e "${RED}Error: Could not find an available port for ${agent_name}. Skipping. Check logs/${agent_name}.log for details.${NC}"
-        else
-            PORT=$CURRENT_ROOT_PORT # Update PORT for the next search (though root is last)
+        # Attempt to run the container with retries
+        run_attempts=0
+        container_id=""
+        while [ "$run_attempts" -lt 5 ]; do
+            run_attempts=$((run_attempts + 1))
+            echo -e "Attempt ${run_attempts}/5: Running command: docker run -d --network \"$NETWORK_NAME\" -p \"${port}:8000\" $AGENT_HOSTS --name \"$container_name\" \"$image_name\""
+            
+            # Try to run the container, capture its ID or error
+            container_id=$(docker run -d --network "$NETWORK_NAME" -p "${port}:8000" $AGENT_HOSTS --name "$container_name" "$image_name" 2>&1)
+            run_status=$?
 
-            echo -e "Running container ${YELLOW}$container_name${NC} on port ${YELLOW}$CURRENT_ROOT_PORT${NC}...\n"
-            docker run -d --network $NETWORK_NAME -p ${CURRENT_ROOT_PORT}:8000 $AGENT_HOSTS --name "$container_name" "$image_name" > "logs/${agent_name}.log" 2>&1
+            echo "Docker run exit status: $run_status"
+            echo "Docker run raw output \(container_id or error\): $container_id"
 
             # Give Docker a moment to start the container
-            sleep 2
+            sleep 5
 
-            # Check if the container is actually running
-            if [ "$(docker ps -q -f name=^\/${container_name}$)" ]; then
-                echo -e "${GREEN}Container ${container_name} is running.${NC}"
+            if [ "$run_status" -eq 0 ] && [ -n "$container_id" ] && docker ps -q --filter "id=$container_id" > /dev/null; then
+                echo -e "${GREEN}Container ${container_name} is running.${NC}\n"
+                break # Container started successfully
             else
-                echo -e "${RED}Container ${container_name} failed to start. Check logs/${agent_name}.log for details.${NC}"
-                # Attempt to get logs if container exited immediately
-                docker logs "$container_name" >> "logs/${agent_name}.log"
+                echo -e "${RED}Container ${container_name} failed to start on attempt ${run_attempts}. Retrying... Check logs/${agent_name}.log for details.${NC}\n"
+                # Output docker run error to log
+                echo "Docker run output (attempt ${run_attempts}): ${container_id}" >> "logs/${agent_name}.log"
+                # Clean up any partially created container
+                docker rm "$container_name" > /dev/null 2>&1 || true # Use || true to prevent script from exiting if rm fails
+                sleep 2 # Wait before retrying
             fi
+        done
 
-            container_id=$(docker ps -aq -f name=^/${agent_name}-dockerized$)
-            if [ -z "$container_id" ]; then
+        if [ "$run_attempts" -eq 5 ] && [ -z "$container_id" ]; then
+            echo -e "${RED}Error: Container %s failed to start after multiple retries. Skipping. Check logs/%s.log for details.${NC}\n" "$container_name" "$agent_name"
+        else
+            # This block is executed only if container_started is true (from the break above)
+            if [ -z "$container_id" ]; then # This check should ideally not be needed if break works
                 echo -e "${RED}Error: Container for $agent_name not found after launch. Check logs/${agent_name}.log for details.${NC}"
             else
                 echo "$container_id" >> $CONTAINER_IDS_FILE
-                echo "$agent_name:$CURRENT_ROOT_PORT" >> $AGENT_PORTS_FILE
+                echo "$agent_name:$port" >> $AGENT_PORTS_FILE
 
-                echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $CURRENT_ROOT_PORT.${NC}"
+                echo -e "${GREEN}Started ${agent_name} (Container ID: ${container_id:0:12}) on port $port.${NC}"
 
                 # Wait for the agent to be healthy
-                if ! wait_for_health_check "$agent_name" "$CURRENT_ROOT_PORT"; then
+                if ! wait_for_health_check "$agent_name" "$port"; then
                     echo -e "${RED}Failed to start ${agent_name}.${NC}"
                     # Attempt to get logs if container exited immediately
                     docker logs "$container_name" >> "logs/${agent_name}.log"
                 fi
             fi
-            PORT=$((CURRENT_ROOT_PORT + 1)) # Update PORT for the next search (though root is last)
         fi
     fi
 fi
+
 
 
 echo -e "\n${GREEN}✅ All Dockerized agents processed. Check logs in /home/cortex/agents_tools/logs for details.${NC}"
