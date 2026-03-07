@@ -1,6 +1,0 @@
-feat: Enable and document Web Surfer Agent
-
-- Enabled `web_surfer_agent` by uncommenting it in `scripts/agents.conf`.
-- Created a basic health check test for `web_surfer_agent` at `tests/test_web_surfer_agent.py`.
-- Created detailed documentation for `web_surfer_agent` at `docs/agents/tools/web_surfer_agent.md`.
-- Updated `README.md` to link to the new `web_surfer_agent` documentation.

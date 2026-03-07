@@ -1,95 +1,108 @@
-# Gemini Agents
+# The Agency
 
-This repository contains a collection of agents that can be used as tools by the Gemini CLI.
+## The Virtual IT Team in Your Pocket 🏢
 
-## Overview
+"The Agency" is an open-source framework that models a complete, 28-person Enterprise Software Development Organization using specialized AI Personas (Skills).
 
-The goal of this project is to create a suite of specialized agents that extend the capabilities of the Gemini CLI. Each agent is a small, independent web service that exposes its functionality through an OpenAPI specification. The Gemini CLI can discover and use these agents as tools.
+Unlike traditional orchestration frameworks (like CrewAI, AutoGen, or LangGraph) that just provide the *code* to connect agents, `The Agency` provides the actual **Domain Knowledge, Organizational Chart, and Standard Operating Procedures (SOPs)** required to build robust software.
 
-## Agent Directory Structure
+Simply inject these personas into your favorite AI tool (Cursor, Roo Code, Gemini CLI, or a local instance of Ollama) and watch the Virtual IT Team design, develop, secure, test, and market your application.
 
-To improve organization and maintainability, agents are now categorized and located within a new `agents/` directory at the project root. The structure follows `agents/<theme>/<agent_name>`, where themes group agents by their primary function or role.
+---
 
-The current themes are:
+## 👥 The Organization Chart
 
-*   **`core`**: Agents fundamental to the CLI's operation or orchestration.
-*   **`tools`**: Agents that provide specific, often atomic, utility functions.
-*   **`roles`**: Agents that embody a specific role or function within a software development lifecycle.
+The Virtual IT Team comprises specialized "Skills", mapped precisely to a modern tech enterprise:
 
-## Agents
+- **Management:** `project_manager`, `historian`, `workspace_manager`
+- **Architecture:** `solution_architect`, `cmo_analyst` (Digital Twin Owner), `sre_cloud_architect`
+- **Development:** `backend_developer`, `frontend_developer`, `coder`
+- **Design:** `ux_ui_designer`
+- **Data Engineering:** `relational_dba`, `graph_database_architect`, `data_scientist`
+- **Quality Assurance:** `chief_test_officer`, `qa_automation_engineer`, `test_engineer`, `e2e_journey_tester`, `test_data_manager`, `ui_qa_engineer`
+- **Security:** `chief_information_security_officer`, `application_security_engineer`, `security_operations_analyst`
+- **Deployment:** `ssdlc_manager`
+- **Marketing & Comms:** `head_of_marketing`, `product_marketing_manager`, `content_copywriter`, `technical_writer`
+- **Support & AI Ops:** `customer_support_triage`, `prompt_engineer`, `makefile_orchestrator`
 
-Here's a categorized list of the agents in this repository:
+*(Read each `SKILL.md` inside the `skills/` folder to review the specific heuristics and constraints of that role).*
 
-### Core Agents
-*   **Root Agent:** An agent that orchestrates other agents, providing a unified interface for managing and interacting with the entire suite of agents. (Located in `agents/core/root_agent`)
+---
 
-### Tool Agents
-*   **File Analyzer Agent:** A simple agent that can perform basic analysis on files, such as counting lines. (Located in `agents/tools/file_analyzer_agent`)
-*   **Google Drive Agent:** An agent for interacting with Google Drive services. (Located in `agents/tools/google_drive_agent`)
-*   **Name Generator Agent:** An agent that can generate names. (Located in `agents/tools/name_generator_agent`)
-*   **Ollama Agent:** An agent that can interface with a local Ollama instance. ([Documentation](docs/agents/tools/ollama_agent.md)) (Located in `agents/tools/ollama_agent`)
-*   **Secret Manager Agent:** Manages secrets and sensitive information. ([Documentation](docs/agents/tools/secret_manager_agent.md)) (Located in `agents/tools/secret_manager_agent`)
-*   **Secure Executor Agent:** Acts as an intermediary to securely inject secret values into commands before execution. ([Documentation](docs/agents/tools/secure_executor_agent.md)) (Located in `agents/tools/secure_executor_agent`)
-*   **Web Surfer Agent:** An agent that can interact with web pages, take screenshots, and perform clicks. ([Documentation](docs/agents/tools/web_surfer_agent.md)) (Located in `agents/tools/web_surfer_agent`)
+## 🚀 How to Use "The Agency"
 
-### Role Agents
-*   **Coder Agent:** An agent focused on writing and modifying code. (Located in `agents/roles/coder_agent`)
-*   **Documentation Agent:** An agent for generating and managing documentation. (Located in `agents/roles/documentation_agent`)
-*   **Frontend Developer Agent:** An agent specialized in frontend development tasks. (Located in `agents/roles/frontend_developer_agent`)
-*   **Historian Agent:** An agent that tracks project evolution, actions, and key learnings, and archives useful files for seamless session resumption. (Located in `agents/roles/historian_agent`)
-*   **Project Office Agent:** An agent for project management and coordination tasks. (Located in `agents/roles/project_office_agent`)
-*   **Project Shipper Agent:** An agent responsible for preparing and shipping projects. (Located in `agents/roles/project_shipper_agent`)
-*   **Solution Architect Agent:** An agent for designing and planning technical solutions. (Located in `agents/roles/solution_architect_agent`)
-*   **Tester Agent:** An agent focused on testing and quality assurance. (Located in `agents/roles/tester_agent`)
-*   **Workspace Manager Agent:** An agent that can create, start, stop, and monitor projects in the workspace. (Located in `agents/roles/workspace_manager_agent`)
+Because The Agency defines *logic* and *processes* rather than hard-coded python scripts, you can use it conceptually within any environment.
 
-## Workspace
+### 1. The Interactive Agency CLI (Recommended)
+You can directly bootstrap and interact with the 28 agentic personas via our free, local CLI wrapper which leverages `Ollama`.
 
-This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, including Docker-based projects for true environment isolation.
+```bash
+# 1. Install UI dependencies
+pip install -r requirements.txt
 
-## Workspace
+# 2. Launch the Interactive Agency
+python agency.py
+```
 
-This project now includes a `workspace` directory where new projects can be created and managed by the `workspace_manager_agent`. This allows for the creation of projects with different technology stacks and runtimes, including Docker-based projects for true environment isolation.
+The graphical menu will guide you through:
+- **Initialize:** Easily copy the IT team into a hidden `.agency/` folder inside any existing codebase you own.
+- **Browse Skills:** View the beautiful organization chart and understand what every department does.
+- **Run Skill:** Choose a specific skill (e.g., `frontend_developer`), paste a task, and let your local Ollama model instantly code it for you.
 
-## Getting Started
+### 2. In Premium Agentic Tools (Cursor, Roo Code, Copilot Workspaces)
+Point your AI assistant at the specific `SKILL.md` you want it to embody. 
+For example, tell Cursor: *"Embody the role defined in `skills/frontend_developer/SKILL.md` and complete this task."*
 
-To use these agents, you need to have the Gemini CLI installed and configured. You also need to run the agent web services.
+### 3. Pure Makefiles & Terminal Piping
+If you prefer raw execution, you can completely ignore `.agency.py` and run sequential generation using the `Makefile` pattern.
 
-### Running Python-based Agents
+**See the example `Makefile` in the root directory for a proof-of-concept pipeline.**
 
-1.  Clone this repository.
-2.  Install the dependencies for all agents: `pip install -r file_analyzer_agent/requirements.txt && pip install -r web_surfer_agent/requirements.txt && pip install -r ollama_agent/requirements.txt`
-3.  Run the `start_agents.sh` script to launch all agents: `./scripts/start_agents.sh`
-4.  The agents will be running on ports starting from 8000.
+```bash
+# Example: Generate an application schema using a local 8B model
+make build-schema 
+```
 
-### Running Dockerized Agents
+---
 
-1.  Ensure Docker is installed and running on your system.
-2.  **Configure Agents:** Edit `scripts/agents.conf` to uncomment the agent directories you wish to launch.
-3.  Run the `parallel_start_dockerized_agents.sh` script to build and launch the configured Dockerized agents: `./scripts/parallel_start_dockerized_agents.sh`
-4.  The agents will be running in Docker containers, accessible on automatically assigned ports starting from 8000.
-5.  To check the status of running agents, use: `./scripts/check_agent_status.sh`
+## 📦 Integrating into an Existing Project
 
-### General Setup
+If you are not starting from scratch, you can easily drop "The Agency" into a mature, existing repository to help you maintain it.
 
-To make the agents available as tools, copy their OpenAPI specifications to the `.gemini/tools/` directory.
+**1. Clone the Skills**
+Clone this repository into a `.agency/` or `.skills/` hidden folder at the root of your existing project, or simply copy the `skills/` directory over.
 
-## Session Management
+**2. Initialize the "Digital Twin" (The Most Important Step)**
+AI agents hallucinate when they don't know your existing architecture. Before asking the Agency to write new code for your existing app, you must map your current state:
+*   **Call the `historian`:** Ask it to read your commit history and existing `README.md` to summarize the project's purpose.
+*   **Call the `solution_architect`:** Ask it to analyze your `src/` directory and generate a `docs/architecture/system_diagram.mermaid` and a `data_models.md` file.
+*   **Call the `cmo_analyst`:** Ask it to review the Architect's output and establish the official "Digital Twin" documentation rules for the project.
 
-This project includes a simple session management feature to help resume work between sessions. The `session.md` file stores a summary of the last session's state, including the last action taken, the status of any running processes, and the next steps.
+**3. Resume Normal Operations**
+Once the `docs/` folder accurately reflects your existing application, you can initiate the `project_manager` with a new feature request. The PM will naturally consult the CMO Analyst, who will read your new Digital Twin, ensuring all new code injected by the Agency perfectly matches your existing styles and schemas!
 
-To resume a session, simply ask me to "resume", and I will read the `session.md` file to get caught up.
+---
 
-## Development Process
+## 🏗️ The Project Lifecycle
 
-This project follows a structured, role-based development process to ensure quality and consistency. All new features and significant changes are developed by following a "virtual IT team" workflow:
+If you elect to use the full agency, follow the routing lifecycle governed by the `project_manager`:
 
-1.  **Product Owner Request:** The user provides a high-level feature request.
-2.  **Solution Architect Planning:** I, acting as the Solution Architect, will create a `Feature Brief` from the provided template. This brief outlines the technical approach and the testing strategy.
-3.  **Implementation:** Acting as the Coder, I will implement the feature according to the brief.
-4.  **Testing:** Acting as the Tester, I will execute the testing plan defined in the brief.
-5.  **Definition of Done:** The feature is only considered complete when all criteria in the `DEFINITION_OF_DONE.md` are met.
+1. **Discovery:** `cmo_analyst` checks the system's "Digital Twin" constraints (`docs/`).
+2. **Design Blueprint:** `ux_ui_designer` maps the wireframes; `prompt_engineer` maps the LLM context flow.
+3. **Architecture:** `solution_architect` defines the data models and component structure.
+4. **Security Check:** `ciso` reviews the architecture for vulnerabilities. *(Must pass before coding).*
+5. **Implementation:** Specialized `backend_developer` and `frontend_developer` write the code.
+6. **Testing:** `chief_test_officer` coordinates unit, integration, and E2E tests.
+7. **Deployment:** `sre_cloud_architect` dictates topology, and `ssdlc_manager` routes it to production.
+8. **Launch:** The Marketing division generates go-to-market copy while the `technical_writer` builds the public APIs.
 
-### Cyclic Error Watchdog
+---
 
-To prevent getting stuck in repetitive, failing loops, I have an internal "Cyclic Error Watchdog" protocol. If I detect that I am repeating the same failing actions, I will automatically interrupt my own process, brainstorm a list of fundamentally different approaches to the problem, and present them to you for a decision.
+## 📜 Legacy Assets
+Older, hard-coded Python SDK variants of this agentic framework have been archived in the `legacy/` folder for historical reference. The future of The Agency is agnostic, prompt-driven markdown injected into powerful local or cloud execution layers.
+
+## Contributing
+Want to add a new role to the IT Team? 
+1. Copy an existing `SKILL.md`.
+2. Define their Core Responsibilities and Workflow Integration.
+3. Submit a PR.
