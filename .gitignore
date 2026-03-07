@@ -11,3 +11,4 @@ archive_payload.py
 .container_ids_dockerized
 logs/
 tmp/contains-studio-agents/
+output/
