@@ -32,4 +32,5 @@ agency = "agency:main_menu"
 
 [tool.setuptools]
 py-modules = ["agency"]
+packages = ["skills"]
 include-package-data = true
