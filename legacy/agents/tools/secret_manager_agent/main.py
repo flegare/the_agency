@@ -11,7 +11,7 @@ app = FastAPI(
 )
 
 # --- Configuration ---
-PROJECT_ID = "your-project-id"
+PROJECT_ID = os.getenv("GOOGLE_CLOUD_PROJECT", "your-project-id")
 
 # --- Pydantic Models ---
 class SecretCreateRequest(BaseModel):
