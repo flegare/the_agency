@@ -23,6 +23,12 @@ Unlike traditional agent orchestration frameworks that require you to write hund
 
 Simply inject these personas into your favorite AI tool and watch the Virtual IT Team design, develop, secure, test, and market your application.
 
+## 🛡️ Core Value: Prompt Poisoning Defense
+As an open-source framework driven purely by contextual markdown, **The Agency** recognizes that "Prompt Injection" and "Data Poisoning" are the largest unmitigated threats to autonomous agent ecosystems.
+
+We maintain a strict **Chain of Trust** for all external contributions. 
+Because malicious actors could attempt to submit Pull Requests containing jailbreaks or data exfiltration commands hidden inside a Persona's System Prompt (`SKILL.md`), this repository treats prompt security as a first-class citizen. All incoming PRs are strictly audited, ensuring that an enterprise using The Agency is never compromised by a poisoned virtual employee. 
+
 ---
 
 ## 👥 The Organization Chart
