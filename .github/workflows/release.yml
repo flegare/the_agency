@@ -1,0 +1,77 @@
+name: Publish to PyPI
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '.github/**'
+      - 'scripts/**'
+      - 'README.md'
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    # Required for PyPI Trusted Publishing
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Build Dependencies
+        run: python -m pip install --upgrade pip build wheel requests
+
+      - name: Get latest commit message
+        id: commit_msg
+        run: |
+          echo "msg=$(git log -1 --pretty=format:'%s')" >> $GITHUB_ENV
+
+      - name: Auto-Bump Version
+        id: bump
+        run: |
+          export COMMIT_MESSAGE="${{ env.msg }}"
+          NEW_VERSION=$(python scripts/bump_version.py)
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+          echo "Bumpped version to $NEW_VERSION"
+
+      - name: Build Source Distribution and Wheel
+        run: python -m build
+
+      # Note: PyPI Trusted publishing requires configuring the PyPI project to trust the GitHub Repo first!
+      #- name: Publish package to PyPI
+      #  uses: pypa/gh-action-pypi-publish@release/v1
+
+      # TEMPORARY FALLBACK IF OIDC IS NOT CONFIGURED YET ON PYPI (UNCOMMENT TO USE, COMMENT OUT THE ACTION ABOVE)
+      # - name: Publish to PyPI via Token
+      #   env:
+      #     TWINE_USERNAME: __token__
+      #     TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      #   run: |
+      #     pip install twine
+      #     twine upload dist/*
+
+      - name: Commit and Push Version Bump
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ env.NEW_VERSION }} [skip ci]" || echo "No changes to commit"
+          git push
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ env.NEW_VERSION }}
+          name: Release v${{ env.NEW_VERSION }}
+          generate_release_notes: true

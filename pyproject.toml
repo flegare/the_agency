@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "the-agency-cli"
+version = "1.0.0"
+description = "The Virtual IT Team in Your Pocket. A framework of 28 AI Personas for enterprise software development."
+readme = "README.md"
+authors = [
+  { name="flegare" }
+]
+license = { text="MIT" }
+requires-python = ">=3.9"
+dependencies = [
+    "rich>=13.0.0",
+    "questionary>=2.0.0",
+    "requests>=2.31.0"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/flegare/the_agency"
+Issues = "https://github.com/flegare/the_agency/issues"
+
+[project.scripts]
+agency = "agency:main_menu"
+
+[tool.setuptools]
+py-modules = ["agency"]
+include-package-data = true
