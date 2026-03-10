@@ -1,3 +1,19 @@
+Metadata-Version: 2.4
+Name: the-agency-cli
+Version: 1.0.0
+Summary: The Virtual IT Team in Your Pocket. A framework of 28 AI Personas for enterprise software development.
+Author: flegare
+License: MIT
+Project-URL: Homepage, https://github.com/flegare/the_agency
+Project-URL: Issues, https://github.com/flegare/the_agency/issues
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+Requires-Dist: rich>=13.0.0
+Requires-Dist: questionary>=2.0.0
+
 # The Agency
 
 ## The Virtual IT Team in Your Pocket 🏢
