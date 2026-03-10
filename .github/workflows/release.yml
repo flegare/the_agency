@@ -49,8 +49,8 @@ jobs:
         run: python -m build
 
       # Note: PyPI Trusted publishing requires configuring the PyPI project to trust the GitHub Repo first!
-      #- name: Publish package to PyPI
-      #  uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Publish package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
 
       # TEMPORARY FALLBACK IF OIDC IS NOT CONFIGURED YET ON PYPI (UNCOMMENT TO USE, COMMENT OUT THE ACTION ABOVE)
       # - name: Publish to PyPI via Token
