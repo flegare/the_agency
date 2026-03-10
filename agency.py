@@ -161,6 +161,11 @@ def auto_detect_and_install():
     if Path(".aider.conf.yml").exists() or Path(".aider.chat.history.md").exists():
          inject_context("Aider", "CONVENTIONS.md", instruction)
          detected = True
+
+    # GitHub Copilot
+    if Path(".github/copilot-instructions.md").exists():
+         inject_context("GitHub Copilot", ".github/copilot-instructions.md", instruction)
+         detected = True
         
     if not detected:
         console.print("[yellow]No popular AI assistant context files detected natively. Try manual installation.[/yellow]")
@@ -180,7 +185,10 @@ def manual_install():
         questionary.Choice("Roo Code / Cline (.clinerules)", value="roo"),
         questionary.Choice("Gemini CLI (GEMINI.md)", value="gemini"),
         questionary.Choice("Claude Code (CLAUDE.md)", value="claude"),
-        questionary.Choice("Aider (CONVENTIONS.md)", value="aider")
+        questionary.Choice("Aider (CONVENTIONS.md)", value="aider"),
+        questionary.Choice("GitHub Copilot (.github/copilot-instructions.md)", value="copilot"),
+        questionary.Separator(),
+        questionary.Choice("🔙 Back", value="back")
     ]
     
     selected = questionary.checkbox(
@@ -188,7 +196,7 @@ def manual_install():
         choices=choices
     ).ask()
     
-    if not selected:
+    if not selected or "back" in selected:
          return
          
     for choice in selected:
@@ -197,6 +205,9 @@ def manual_install():
          if "gemini" == choice: inject_context("Gemini", "GEMINI.md", instruction)
          if "claude" == choice: inject_context("Claude", "CLAUDE.md", instruction)
          if "aider" == choice: inject_context("Aider", "CONVENTIONS.md", instruction)
+         if "copilot" == choice: inject_context("GitHub Copilot", ".github/copilot-instructions.md", instruction)
+         
+    console.print("\n[bold green]Success![/bold green] The Virtual IT team is ready to assist your AI.")
          
     console.print("\n[bold green]Success![/bold green] The Virtual IT team is ready to assist your AI.")
 
