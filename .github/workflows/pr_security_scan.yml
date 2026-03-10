@@ -1,0 +1,67 @@
+name: Basalt Shield PR Security Scan
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout The Agency PR
+        uses: actions/checkout@v4
+        with:
+          path: the_agency
+          
+      # Since we need the list of changed files, we fetch the base branch
+      - name: Fetch base branch
+        run: |
+          cd the_agency
+          git fetch origin ${{ github.base_ref }}
+
+      - name: Checkout Basalt Shield Registry
+        uses: actions/checkout@v4
+        with:
+          repository: flegare/basalt_shield
+          path: basalt_shield
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Boot Ephemeral Basalt Shield 
+        run: |
+          cd basalt_shield
+          # Assuming Basalt Shield has a standard docker-compose stack
+          docker-compose -f docker-compose.yml up -d --build
+          echo "Waiting for Basalt Shield API to become healthy..."
+          sleep 30 # Give FastAPI/Transformers time to load into memory
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Scan Dependencies
+        run: pip install requests
+
+      - name: Get Changed Files in PR
+        id: files
+        run: |
+          cd the_agency
+          # Get the list of modified files in the skills directory
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep '^skills/.*\.md$' || true)
+          echo "files=$CHANGED_FILES" >> $GITHUB_ENV
+
+      - name: Run Basalt Shield Validation
+        run: |
+          cd the_agency
+          if [ -z "${{ env.files }}" ]; then
+            echo "No SKILL.md files modified in this PR. Skipping scan."
+            exit 0
+          fi
+          
+          # Pass the files as arguments to the python script
+          # Using tr to replace newlines with spaces for arg passing
+          python scripts/scan_pr.py $(echo "${{ env.files }}" | tr '\n' ' ')
