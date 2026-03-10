@@ -9,11 +9,19 @@
 
 ## The Virtual IT Team in Your Pocket 🏢
 
-"The Agency" is an open-source framework that models a complete Enterprise Software Development Organization using specialized AI Personas (Skills).
+"The Agency" is an open-source framework that models a complete Enterprise Software Development Organization using specialized AI Personas ([Skills](skills/)).
 
-Unlike traditional orchestration frameworks (like CrewAI, AutoGen, or LangGraph) that just provide the *code* to connect agents, `The Agency` provides the actual **Domain Knowledge, Organizational Chart, and Standard Operating Procedures (SOPs)** required to build robust software.
+## ⚖️ Why The Agency? (vs. CrewAI, AutoGen, LangGraph)
 
-Simply inject these personas into your favorite AI tool (Cursor, Roo Code, Gemini CLI, or a local instance of Ollama) and watch the Virtual IT Team design, develop, secure, test, and market your application.
+Unlike traditional agent orchestration frameworks that require you to write hundreds of lines of complex Python code to define state variables, execution graphs, and LLM API hooks, **The Agency** is purely contextual.
+
+- **Zero Code Orchestration:** The Agency provides the missing *Domain Knowledge, Organizational Chart, and Standard Operating Procedures (SOPs)* as modular logic files. You don't need to write connection code.
+- **Bring Your Own Editor:** Instead of running a headless python script, you inject The Agency's Personas directly into the powerful AI tools you already use every day (Cursor, Roo Code, Copilot Workspaces, Gemini CLI, Aider).
+- **Practical Software Engineering:** Other frameworks give you a generic sandbox. The Agency gives you a heavily researched, production-proven IT department ranging from a `project_manager` and `cmo_analyst` to a `chief_information_security_officer` and `sre_cloud_architect`.
+
+*You don't need another orchestration engine. You just need a better team.*
+
+Simply inject these personas into your favorite AI tool and watch the Virtual IT Team design, develop, secure, test, and market your application.
 
 ---
 
