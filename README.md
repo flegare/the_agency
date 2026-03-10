@@ -1,8 +1,15 @@
+<div align="center">
+  <img src="img/banner.png" alt="The Agency Banner" width="100%">
+</div>
+
 # The Agency
+
+[![PyPI version](https://badge.fury.io/py/the-agency-cli.svg)](https://badge.fury.io/py/the-agency-cli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## The Virtual IT Team in Your Pocket 🏢
 
-"The Agency" is an open-source framework that models a complete, 28-person Enterprise Software Development Organization using specialized AI Personas (Skills).
+"The Agency" is an open-source framework that models a complete Enterprise Software Development Organization using specialized AI Personas (Skills).
 
 Unlike traditional orchestration frameworks (like CrewAI, AutoGen, or LangGraph) that just provide the *code* to connect agents, `The Agency` provides the actual **Domain Knowledge, Organizational Chart, and Standard Operating Procedures (SOPs)** required to build robust software.
 
@@ -114,8 +121,16 @@ If you elect to use the full agency, follow the routing lifecycle governed by th
 ## 📜 Legacy Assets
 Older, hard-coded Python SDK variants of this agentic framework have been archived in the `legacy/` folder for historical reference. The future of The Agency is agnostic, prompt-driven markdown injected into powerful local or cloud execution layers.
 
-## Contributing
+## 🤝 Contributing
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
 Want to add a new role to the IT Team? 
-1. Copy an existing `SKILL.md`.
-2. Define their Core Responsibilities and Workflow Integration.
-3. Submit a PR.
+1. Copy an existing `SKILL.md` inside `skills/`.
+2. Define their Core Responsibilities and Workflow Integration in the markdown.
+3. Submit a Pull Request.
+
+## 🐛 Issues and Support
+If you encounter any bugs, have feature requests, or need help integrating The Agency into your workflow, please [open an issue](../../issues) on GitHub.
+
+## 📄 License
+Distributed under the MIT License. See `LICENSE` for more information.
