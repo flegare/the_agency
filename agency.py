@@ -67,7 +67,13 @@ def check_for_updates():
         pass # Fail silently (e.g., offline, or not installed via PyPI)
 
 def print_header():
+    try:
+        current_version = importlib.metadata.version("the-agency-cli")
+    except Exception:
+        current_version = "unknown"
+        
     console.print(Text(AGENCY_LOGO, style="bold cyan"))
+    console.print(f"[dim]Version {current_version}[/dim]\n", justify="center")
 
 def check_ollama(model="llama3.2"):
     """Check if Ollama is running and has the model."""
