@@ -1,6 +1,11 @@
 name: Basalt Shield PR Security Scan
 
 on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'skills/**'
+      - '.github/workflows/pr_security_scan.yml'
   pull_request:
     paths:
       - 'skills/**'
@@ -19,7 +24,11 @@ jobs:
       - name: Fetch base branch
         run: |
           cd the_agency
-          git fetch origin ${{ github.base_ref }}
+          BASE_REF="${{ github.base_ref }}"
+          if [ -z "$BASE_REF" ]; then
+            BASE_REF="main"
+          fi
+          git fetch origin $BASE_REF
 
       - name: Checkout Basalt Shield Registry
         uses: actions/checkout@v4
@@ -50,8 +59,12 @@ jobs:
         id: files
         run: |
           cd the_agency
+          BASE_REF="${{ github.base_ref }}"
+          if [ -z "$BASE_REF" ]; then
+            BASE_REF="main"
+          fi
           # Get the list of modified files in the skills directory
-          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }} HEAD | grep '^skills/.*\.md$' || true)
+          CHANGED_FILES=$(git diff --name-only origin/$BASE_REF HEAD | grep '^skills/.*\.md$' || true)
           echo "files=$CHANGED_FILES" >> $GITHUB_ENV
 
       - name: Run Basalt Shield Validation
