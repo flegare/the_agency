@@ -102,6 +102,74 @@ class TestGatherCodebaseContext:
         assert "Project Root Directory Listing" in context
 
 
+class TestGetSkillDiff:
+    def test_returns_new_skills(self, tmp_path, monkeypatch):
+        src = _make_fake_skills_src(tmp_path)
+        # Only install one of the three package skills
+        skills_dst = tmp_path / ".agency" / "skills" / "project_manager"
+        skills_dst.mkdir(parents=True)
+        monkeypatch.setattr(agency, "SKILLS_SRC_DIR", src)
+        monkeypatch.setattr(agency, "AGENCY_DIR", tmp_path / ".agency")
+
+        diff = agency.get_skill_diff()
+
+        assert "historian" in diff
+        assert "frontend_developer" in diff
+        assert "project_manager" not in diff
+
+    def test_returns_empty_when_up_to_date(self, tmp_path, monkeypatch):
+        src = _make_fake_skills_src(tmp_path)
+        # Install all skills
+        for skill in ["project_manager", "historian", "frontend_developer"]:
+            d = tmp_path / ".agency" / "skills" / skill
+            d.mkdir(parents=True)
+        monkeypatch.setattr(agency, "SKILLS_SRC_DIR", src)
+        monkeypatch.setattr(agency, "AGENCY_DIR", tmp_path / ".agency")
+
+        diff = agency.get_skill_diff()
+
+        assert diff == []
+
+    def test_returns_empty_if_src_missing(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(agency, "SKILLS_SRC_DIR", tmp_path / "nonexistent")
+        monkeypatch.setattr(agency, "AGENCY_DIR", tmp_path / ".agency")
+
+        diff = agency.get_skill_diff()
+
+        assert diff == []
+
+
+class TestSyncSkills:
+    def test_copies_only_new_skills(self, tmp_path, monkeypatch):
+        src = _make_fake_skills_src(tmp_path)
+        # Pre-install one skill
+        existing = tmp_path / ".agency" / "skills" / "project_manager"
+        existing.mkdir(parents=True)
+        (existing / "SKILL.md").write_text("# PM", encoding="utf-8")
+        monkeypatch.setattr(agency, "SKILLS_SRC_DIR", src)
+        monkeypatch.setattr(agency, "AGENCY_DIR", tmp_path / ".agency")
+
+        count = agency.sync_skills()
+
+        assert count == 2
+        assert (tmp_path / ".agency" / "skills" / "historian" / "SKILL.md").exists()
+        assert (tmp_path / ".agency" / "skills" / "frontend_developer" / "SKILL.md").exists()
+        # Existing skill not touched
+        assert (tmp_path / ".agency" / "skills" / "project_manager" / "SKILL.md").read_text() == "# PM"
+
+    def test_returns_zero_when_up_to_date(self, tmp_path, monkeypatch):
+        src = _make_fake_skills_src(tmp_path)
+        for skill in ["project_manager", "historian", "frontend_developer"]:
+            d = tmp_path / ".agency" / "skills" / skill
+            d.mkdir(parents=True)
+        monkeypatch.setattr(agency, "SKILLS_SRC_DIR", src)
+        monkeypatch.setattr(agency, "AGENCY_DIR", tmp_path / ".agency")
+
+        count = agency.sync_skills()
+
+        assert count == 0
+
+
 class TestAgencyInstruction:
     """Verify the injected instruction contains the expected skill system content."""
 

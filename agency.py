@@ -377,6 +377,66 @@ def install_agency_skills() -> bool:
         console.print(f"[red]Failed to install skills: {e}[/red]")
         return False
 
+
+def get_skill_diff() -> list[str]:
+    """Return skill names present in the package but missing from .agency/skills/."""
+    if not SKILLS_SRC_DIR.exists():
+        return []
+    skills_dst = AGENCY_DIR / "skills"
+    installed = {p.name for p in skills_dst.iterdir()} if skills_dst.exists() else set()
+    package_skills = {p.name for p in SKILLS_SRC_DIR.iterdir() if p.is_dir()}
+    return sorted(package_skills - installed)
+
+
+def sync_skills() -> int:
+    """Copy new skills from the package into .agency/skills/. Returns count of skills added."""
+    new_skills = get_skill_diff()
+    if not new_skills:
+        console.print("[green]Skills are up to date — no new skills to sync.[/green]")
+        return 0
+
+    skills_dst = AGENCY_DIR / "skills"
+    skills_dst.mkdir(parents=True, exist_ok=True)
+
+    added = 0
+    for skill_name in new_skills:
+        src = SKILLS_SRC_DIR / skill_name
+        dst = skills_dst / skill_name
+        try:
+            shutil.copytree(src, dst)
+            console.print(f"[green]  + {skill_name}[/green]")
+            added += 1
+        except Exception as e:
+            console.print(f"[red]  ✗ {skill_name}: {e}[/red]")
+
+    console.print(f"\n[bold green]Synced {added} new skill(s) to .agency/skills/[/bold green]")
+    return added
+
+
+def update_agency():
+    """Sync new skills and optionally re-inject the latest AGENCY_INSTRUCTION."""
+    console.print(Panel("Checking for new skills...", style="cyan"))
+
+    if not SKILLS_SRC_DIR.exists():
+        console.print("[red]Package skills directory not found. Run: pipx reinstall the-agency-cli[/red]")
+        return
+
+    new_skills = get_skill_diff()
+    if new_skills:
+        console.print(f"[cyan]Found {len(new_skills)} new skill(s):[/cyan]")
+        for s in new_skills:
+            console.print(f"  • {s}")
+        sync_skills()
+    else:
+        console.print("[green]No new skills found — already up to date.[/green]")
+
+    re_inject = questionary.confirm(
+        "Re-inject updated Agency instructions into detected AI tool config files?",
+        default=False,
+    ).ask()
+    if re_inject:
+        auto_detect_and_install()
+
 def inject_context(tool_name: str, file_path_str: str, instruction: str) -> bool:
     """Injects Agency instructions into a tool's project memory file."""
     path = Path(file_path_str)
@@ -765,10 +825,12 @@ def main_menu():
             map_digital_twin()
         elif cmd == "ollama":
             setup_ollama()
+        elif cmd == "update":
+            update_agency()
         else:
             console.print(
                 f"[red]Unknown command: '{cmd}'[/red]\n"
-                "Available: [cyan]init  list  run  twin  ollama[/cyan]\n"
+                "Available: [cyan]init  list  run  twin  ollama  update[/cyan]\n"
                 "Run [cyan]agency[/cyan] with no arguments for the interactive menu."
             )
         return
@@ -788,6 +850,7 @@ def main_menu():
             "Welcome to The Agency. How can the IT Team assist you today?",
             choices=[
                 "🚀 Initialize / Configure Project (init)",
+                "🔄 Update Skills (sync new skills from package)",
                 "👥 Browse Organization Chart (list)",
                 "⚡ Task a specific Skill (run)",
                 "🦙 Ollama Setup (install / pull models)",
@@ -800,6 +863,8 @@ def main_menu():
             break
         elif "init" in choice:
             init_agency()
+        elif "Update Skills" in choice:
+            update_agency()
         elif "list" in choice:
             browse_skills()
         elif "run" in choice:
