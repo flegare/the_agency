@@ -30,7 +30,14 @@ Issues = "https://github.com/flegare/the_agency/issues"
 [project.scripts]
 agency = "agency:main_menu"
 
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
 [tool.setuptools]
 py-modules = ["agency"]
 packages = ["skills"]
 include-package-data = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
