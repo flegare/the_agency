@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "the-agency-cli"
-version = "1.6.0"
+version = "1.7.0"
 description = "The Virtual IT Team in Your Pocket. A framework of 28 AI Personas for enterprise software development."
 readme = "README.md"
 authors = [
