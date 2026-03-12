@@ -38,6 +38,7 @@ SKILL_CATEGORIES = {
     "Data & AI": ["relational_dba", "graph_database_architect", "data_scientist", "prompt_engineer"],
     "Design & Docs": ["ux_ui_designer", "technical_writer", "content_copywriter"],
     "Marketing": ["head_of_marketing", "product_marketing_manager"],
+    "Reel Production": ["reel_creative_director", "voiceover_script_writer", "storyboard_artist", "cinematography_director"],
     "Quality Assurance": ["chief_test_officer", "qa_automation_engineer", "test_engineer", "e2e_journey_tester", "test_data_manager", "ui_qa_engineer"],
     "Security & Deploy": ["chief_information_security_officer", "application_security_engineer", "security_operations_analyst", "ssdlc_manager"],
     "Support Ops": ["customer_support_triage", "makefile_orchestrator"]
@@ -76,6 +77,7 @@ All skills live in `.agency/skills/<skill_name>/SKILL.md`. Available skills:
 | Data & AI | `relational_dba`, `graph_database_architect`, `data_scientist`, `prompt_engineer` |
 | Design & Docs | `ux_ui_designer`, `technical_writer`, `content_copywriter` |
 | Marketing | `head_of_marketing`, `product_marketing_manager` |
+| Reel Production | `reel_creative_director`, `voiceover_script_writer`, `storyboard_artist`, `cinematography_director` |
 | Quality Assurance | `chief_test_officer`, `qa_automation_engineer`, `test_engineer`, `e2e_journey_tester`, `test_data_manager`, `ui_qa_engineer` |
 | Security & Deploy | `chief_information_security_officer`, `application_security_engineer`, `security_operations_analyst`, `ssdlc_manager` |
 | Support Ops | `customer_support_triage`, `makefile_orchestrator` |
