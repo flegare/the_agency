@@ -616,22 +616,15 @@ def run_skill():
     if not skill_choice:
         return
 
-    skill_path_agency = AGENCY_DIR / "skills" / skill_choice / "SKILL.md"
-    skill_path_main = SKILLS_SRC_DIR / skill_choice / "SKILL.md"
-
-    active_path = None
-    if skill_path_agency.exists():
-        active_path = skill_path_agency
-    elif skill_path_main.exists():
-        active_path = skill_path_main
-
-    if not active_path:
-        console.print(f"[red]Could not find SKILL.md for '{skill_choice}'[/red]")
-        return
-
     task_input = questionary.text("Describe the task you want this skill to perform:").ask()
     if not task_input:
         return
+
+    default_out = f"docs/{skill_choice}_output.md"
+    output_path_str = questionary.text(
+        "Save output to file (leave blank to stream to terminal):",
+        default=default_out,
+    ).ask()
 
     model = select_model("Which Ollama model should run this skill?")
     if not model:
@@ -639,11 +632,22 @@ def run_skill():
 
     console.print(f"\n[bold yellow]Dispatching task to {skill_choice} via {model}...[/bold yellow]\n")
 
-    skill_context = active_path.read_text(encoding="utf-8")
-    prompt = f"{skill_context}\n\nTASK: {task_input}"
+    if output_path_str and output_path_str.strip():
+        # Use file-writing path with spinner and full context injection
+        context = gather_codebase_context()
+        output_file = Path(output_path_str.strip())
+        ok = run_agent_to_file(skill_choice, model, task_input, output_file, context)
+        if ok:
+            console.print(f"[bold green]Output written to {output_file}[/bold green]")
+        return
+
+    # Stream to terminal (no file output)
+    active_path_str, prompt = _build_skill_prompt(skill_choice, task_input, gather_codebase_context())
+    if not active_path_str:
+        console.print(f"[red]Could not find SKILL.md for '{skill_choice}'[/red]")
+        return
 
     try:
-        # stdout not captured — streams directly to terminal
         subprocess.run(
             ["ollama", "run", model],
             input=prompt,
@@ -700,8 +704,8 @@ def gather_codebase_context() -> str:
 
     return "\n\n".join(context_parts)
 
-def run_agent_to_file(skill_choice: str, model: str, task_input: str, output_file: Path, context: str = "") -> bool:
-    """Run an agent and write output to a file, with a live spinner and 10-min timeout."""
+def _build_skill_prompt(skill_choice: str, task_input: str, context: str = "") -> tuple[str | None, str]:
+    """Load SKILL.md, inject discovery files and codebase context, return (active_path_str, prompt)."""
     skill_path_agency = AGENCY_DIR / "skills" / skill_choice / "SKILL.md"
     skill_path_main = SKILLS_SRC_DIR / skill_choice / "SKILL.md"
 
@@ -712,13 +716,63 @@ def run_agent_to_file(skill_choice: str, model: str, task_input: str, output_fil
         active_path = skill_path_main
 
     if not active_path:
-        console.print(f"[red]Could not find SKILL.md for '{skill_choice}'[/red]")
-        return False
+        return None, ""
 
     skill_context = active_path.read_text(encoding="utf-8")
-    prompt = f"{skill_context}\n\nTASK: {task_input}"
+
+    # Inject discovery files that skills' protocols ask for
+    discovery_files = [
+        "docs/cmo_state.md",
+        "docs/product_brief.md",
+        "docs/features",  # directory — list contents
+    ]
+    discovery_parts = []
+    for df in discovery_files:
+        dp = Path(df)
+        if dp.is_file():
+            try:
+                txt = dp.read_text(encoding="utf-8")
+                if len(txt) > 10000:
+                    txt = txt[:10000] + "\n...[TRUNCATED]..."
+                discovery_parts.append(f"### {df} ###\n{txt}")
+            except Exception:
+                pass
+        elif dp.is_dir():
+            files = list(dp.glob("*.md"))
+            for fp in files[:10]:
+                try:
+                    txt = fp.read_text(encoding="utf-8")
+                    if len(txt) > 5000:
+                        txt = txt[:5000] + "\n...[TRUNCATED]..."
+                    discovery_parts.append(f"### {fp} ###\n{txt}")
+                except Exception:
+                    pass
+
+    output_instruction = (
+        "\n\n## OUTPUT REQUIREMENT\n"
+        "Your response MUST be a complete, structured Markdown document ready to be saved as a file. "
+        "Do NOT produce a conversational reply. Do NOT summarise what you will do. "
+        "Write the actual deliverable defined in the skill above — headers, sections, and all content — "
+        "exactly as it would appear in the final file. Begin with the document title on line 1."
+    )
+
+    prompt = skill_context + output_instruction + f"\n\n## TASK\n{task_input}"
+
+    if discovery_parts:
+        prompt += "\n\n## PROJECT DISCOVERY FILES\n" + "\n\n".join(discovery_parts)
+
     if context:
-        prompt += f"\n\nCODEBASE CONTEXT:\n{context}"
+        prompt += f"\n\n## CODEBASE CONTEXT\n{context}"
+
+    return str(active_path), prompt
+
+
+def run_agent_to_file(skill_choice: str, model: str, task_input: str, output_file: Path, context: str = "") -> bool:
+    """Run an agent and write output to a file, with a live spinner and 10-min timeout."""
+    active_path, prompt = _build_skill_prompt(skill_choice, task_input, context)
+    if not active_path:
+        console.print(f"[red]Could not find SKILL.md for '{skill_choice}'[/red]")
+        return False
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
