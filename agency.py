@@ -43,9 +43,21 @@ SKILL_CATEGORIES = {
     "Support Ops": ["customer_support_triage", "makefile_orchestrator"]
 }
 
+# Popular models shown when the user wants to pull one
+POPULAR_MODELS = [
+    "llama3.2",
+    "llama3.2:1b",
+    "llama3.1:8b",
+    "mistral",
+    "codellama",
+    "deepseek-coder-v2",
+    "qwen2.5-coder",
+    "phi3",
+    "gemma2",
+    "gemma2:2b",
+]
+
 # Rich instruction text injected into AI tool config files.
-# Deliberately detailed so every assistant — regardless of vendor — understands
-# the skills system and can self-navigate without extra prompting.
 AGENCY_INSTRUCTION = """\
 ## The Agency - Virtual IT Team
 
@@ -103,7 +115,7 @@ def check_for_updates():
             if latest_parts > curr_parts:
                 UPDATE_AVAILABLE = latest_version
     except Exception:
-        pass  # Fail silently (offline, or not installed via PyPI)
+        pass
 
 def print_header():
     try:
@@ -113,8 +125,32 @@ def print_header():
     console.print(Text(AGENCY_LOGO, style="bold cyan"))
     console.print(f"[dim]Version {current_version}[/dim]\n", justify="center")
 
-def check_ollama(model: str = "llama3.2") -> bool:
-    """Check if the Ollama CLI is available and responsive. Returns True if ready."""
+# ---------------------------------------------------------------------------
+# Ollama helpers
+# ---------------------------------------------------------------------------
+
+def _ollama_available() -> bool:
+    """Return True if the ollama binary exists in PATH."""
+    try:
+        subprocess.run(
+            ["ollama", "--version"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return True
+    except FileNotFoundError:
+        return False
+
+def check_ollama() -> bool:
+    """Verify Ollama is installed and its daemon is responsive.
+    Prints a helpful error and returns False on failure."""
+    if not _ollama_available():
+        console.print(
+            "[red]Error: 'ollama' not found in PATH.[/red]\n"
+            "Use [cyan]agency ollama[/cyan] to install it, or visit https://ollama.com"
+        )
+        return False
     try:
         subprocess.run(
             ["ollama", "list"],
@@ -123,18 +159,199 @@ def check_ollama(model: str = "llama3.2") -> bool:
             check=True,
         )
         return True
-    except FileNotFoundError:
-        console.print(
-            "[red]Error: 'ollama' CLI not found in PATH.\n"
-            "  • Install Ollama from https://ollama.com (available for Windows, macOS, Linux)\n"
-            "  • After installation, make sure the 'ollama' command is accessible in your terminal.[/red]"
-        )
-        return False
     except subprocess.CalledProcessError:
         console.print(
-            "[red]Error: Ollama is not running. Please start the Ollama application and try again.[/red]"
+            "[red]Ollama is installed but its daemon isn't running.\n"
+            "Start the Ollama application and try again.[/red]"
         )
         return False
+
+def get_installed_models() -> list:
+    """Return list of model name strings from `ollama list`."""
+    try:
+        result = subprocess.run(
+            ["ollama", "list"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        lines = result.stdout.strip().splitlines()
+        models = []
+        for line in lines[1:]:  # skip header row
+            parts = line.split()
+            if parts:
+                models.append(parts[0])
+        return models
+    except Exception:
+        return []
+
+def pull_ollama_model(model_name: str) -> bool:
+    """Pull a model from Ollama Hub, streaming progress directly to the terminal."""
+    console.print(f"\n[bold yellow]Pulling [cyan]{model_name}[/cyan]...[/bold yellow] (this may take a few minutes)\n")
+    try:
+        subprocess.run(["ollama", "pull", model_name], check=True)
+        console.print(f"\n[green]Model '{model_name}' ready.[/green]")
+        return True
+    except subprocess.CalledProcessError:
+        console.print(f"[red]Failed to pull '{model_name}'. Check the model name and try again.[/red]")
+        return False
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Pull cancelled.[/yellow]")
+        return False
+
+def select_model(prompt_text: str = "Which Ollama model?") -> str:
+    """Show installed models as a selection list.
+    Offers to pull a new model if none are installed or user wants a different one."""
+    installed = get_installed_models()
+
+    choices = []
+    if installed:
+        for m in installed:
+            choices.append(questionary.Choice(f"  {m}", value=m))
+        choices.append(questionary.Separator())
+
+    choices.append(questionary.Choice("📥  Pull / install a model...", value="__pull__"))
+    if installed:
+        choices.append(questionary.Choice("✏️   Type a model name manually", value="__manual__"))
+
+    choice = questionary.select(prompt_text, choices=choices).ask()
+
+    if not choice:
+        return ""
+
+    if choice == "__manual__":
+        return questionary.text("Model name:").ask() or ""
+
+    if choice == "__pull__":
+        # Filter out already-installed models from the suggestions
+        suggestions = [m for m in POPULAR_MODELS if m not in installed]
+        pull_choices = [questionary.Choice(m, value=m) for m in suggestions]
+        pull_choices.append(questionary.Separator())
+        pull_choices.append(questionary.Choice("✏️   Type a custom model name", value="__custom__"))
+
+        model_to_pull = questionary.select("Which model would you like to pull?", choices=pull_choices).ask()
+
+        if not model_to_pull:
+            return ""
+        if model_to_pull == "__custom__":
+            model_to_pull = questionary.text("Enter model name (e.g. llama3.2:8b):").ask() or ""
+
+        if not model_to_pull:
+            return ""
+
+        return model_to_pull if pull_ollama_model(model_to_pull) else ""
+
+    return choice
+
+def setup_ollama():
+    """Guide the user through installing Ollama and managing local models."""
+    console.print(Panel("🦙  Ollama Setup", style="bold cyan"))
+
+    ollama_installed = _ollama_available()
+
+    if not ollama_installed:
+        console.print("[yellow]Ollama is not installed on this system.[/yellow]\n")
+        platform = sys.platform
+
+        if platform == "win32":
+            console.print(
+                "Install via [bold]winget[/bold] (Windows Package Manager):\n"
+                "  [cyan]winget install Ollama.Ollama[/cyan]\n\n"
+                "Or download the installer directly from [cyan]https://ollama.com/download/windows[/cyan]"
+            )
+            if questionary.confirm("\nTry to install now via winget?").ask():
+                try:
+                    subprocess.run(["winget", "install", "Ollama.Ollama", "--accept-package-agreements", "--accept-source-agreements"], check=True)
+                    console.print("[green]Ollama installed. Please restart your terminal and run `agency ollama` again.[/green]")
+                except FileNotFoundError:
+                    console.print("[red]winget not found. Please install Ollama manually from https://ollama.com/download/windows[/red]")
+                except subprocess.CalledProcessError:
+                    console.print("[red]winget install failed. Please install Ollama manually.[/red]")
+            return
+
+        elif platform == "darwin":
+            console.print(
+                "Install via [bold]Homebrew[/bold]:\n"
+                "  [cyan]brew install ollama[/cyan]\n\n"
+                "Or download the macOS app from [cyan]https://ollama.com/download/mac[/cyan]"
+            )
+            if questionary.confirm("\nTry to install now via Homebrew?").ask():
+                try:
+                    subprocess.run(["brew", "install", "ollama"], check=True)
+                    console.print("[green]Ollama installed. Run `ollama serve` then `agency ollama` again.[/green]")
+                except FileNotFoundError:
+                    console.print("[red]Homebrew not found. Install it from https://brew.sh or install Ollama manually.[/red]")
+                except subprocess.CalledProcessError:
+                    console.print("[red]brew install failed. Please install Ollama manually.[/red]")
+            return
+
+        else:  # Linux
+            console.print(
+                "Install via the official script:\n"
+                "  [cyan]curl -fsSL https://ollama.com/install.sh | sh[/cyan]"
+            )
+            if questionary.confirm("\nRun the install script now?").ask():
+                try:
+                    subprocess.run(
+                        "curl -fsSL https://ollama.com/install.sh | sh",
+                        shell=True,
+                        check=True,
+                    )
+                    console.print("[green]Ollama installed. Run `ollama serve` in a separate terminal, then `agency ollama` again.[/green]")
+                except subprocess.CalledProcessError:
+                    console.print("[red]Install script failed. Please install manually from https://ollama.com[/red]")
+            return
+
+    # Ollama is installed — check daemon
+    daemon_ok = check_ollama()
+    installed_models = get_installed_models() if daemon_ok else []
+
+    console.print("[green]Ollama is installed.[/green]")
+    if not daemon_ok:
+        console.print("[yellow]Daemon not running — start the Ollama application to manage models.[/yellow]")
+        return
+
+    # Show installed models
+    if installed_models:
+        table = Table(title="Installed Models", show_lines=False)
+        table.add_column("Model", style="cyan")
+        for m in installed_models:
+            table.add_row(m)
+        console.print(table)
+    else:
+        console.print("[yellow]No models installed yet.[/yellow]")
+
+    # Offer to pull more
+    while True:
+        action = questionary.select(
+            "What would you like to do?",
+            choices=[
+                "📥  Pull a model",
+                "🔙  Back",
+            ],
+        ).ask()
+
+        if not action or "Back" in action:
+            break
+
+        if "Pull" in action:
+            suggestions = [m for m in POPULAR_MODELS if m not in installed_models]
+            pull_choices = [questionary.Choice(m, value=m) for m in suggestions]
+            pull_choices.append(questionary.Separator())
+            pull_choices.append(questionary.Choice("✏️   Type a custom model name", value="__custom__"))
+
+            model_to_pull = questionary.select("Which model?", choices=pull_choices).ask()
+            if not model_to_pull:
+                continue
+            if model_to_pull == "__custom__":
+                model_to_pull = questionary.text("Model name (e.g. llama3.2:8b):").ask() or ""
+            if model_to_pull:
+                if pull_ollama_model(model_to_pull):
+                    installed_models.append(model_to_pull)
+
+# ---------------------------------------------------------------------------
+# Skills installation & context injection
+# ---------------------------------------------------------------------------
 
 def install_agency_skills() -> bool:
     """Bootstrap .agency folder with skills from the installed package."""
@@ -147,7 +364,7 @@ def install_agency_skills() -> bool:
     if not SKILLS_SRC_DIR.exists():
         console.print(
             "[red]Error: 'skills/' directory not found in the installed package.\n"
-            "Please reinstall the-agency-cli: pipx reinstall the-agency-cli[/red]"
+            "Please reinstall: pipx reinstall the-agency-cli[/red]"
         )
         return False
 
@@ -181,17 +398,7 @@ def inject_context(tool_name: str, file_path_str: str, instruction: str) -> bool
         return False
 
 def _detect_copilot() -> bool:
-    """
-    Detect GitHub Copilot presence.
-
-    Copilot doesn't create a unique marker file on its own — it reads from
-    `.github/copilot-instructions.md` when present.  We therefore trigger on:
-      1. The instruction file already existing (already configured).
-      2. The `.github/` directory existing (repo is GitHub-connected; Copilot
-         may be active).
-      3. `.vscode/settings.json` mentioning 'copilot' (VS Code extension
-         is configured).
-    """
+    """Detect GitHub Copilot via .github/ dir, copilot-instructions.md, or VS Code settings."""
     if Path(".github/copilot-instructions.md").exists():
         return True
     if Path(".github").is_dir():
@@ -212,42 +419,34 @@ def auto_detect_and_install():
     detected = False
     console.print(Panel("Scanning for AI Assistants...", style="cyan"))
 
-    # Cursor
     if Path(".cursorrules").exists() or Path(".cursor").exists():
         inject_context("Cursor", ".cursorrules", AGENCY_INSTRUCTION)
         detected = True
 
-    # Roo Code / Cline
     if Path(".clinerules").exists() or Path(".clinerules").is_dir() or Path(".roomodes").exists():
         inject_context("Roo Code / Cline", ".clinerules", AGENCY_INSTRUCTION)
         detected = True
 
-    # Gemini CLI
     if Path(".gemini").exists() or Path("GEMINI.md").exists() or Path(".agents").exists():
         inject_context("Gemini CLI", "GEMINI.md", AGENCY_INSTRUCTION)
         detected = True
 
-    # Claude Code
     if Path(".claude").exists() or Path("CLAUDE.md").exists():
         inject_context("Claude Code", "CLAUDE.md", AGENCY_INSTRUCTION)
         detected = True
 
-    # Aider
     if Path(".aider.conf.yml").exists() or Path(".aider.chat.history.md").exists():
         inject_context("Aider", "CONVENTIONS.md", AGENCY_INSTRUCTION)
         detected = True
 
-    # GitHub Copilot — detected via .github/ dir, copilot-instructions.md, or VS Code settings
     if _detect_copilot():
         inject_context("GitHub Copilot", ".github/copilot-instructions.md", AGENCY_INSTRUCTION)
         detected = True
 
-    # Windsurf / Codeium
     if Path(".windsurfrules").exists() or Path(".codeiumrc").exists():
         inject_context("Windsurf", ".windsurfrules", AGENCY_INSTRUCTION)
         detected = True
 
-    # Amp / Continue
     if Path(".continue").is_dir() or Path(".amp").is_dir():
         inject_context("Continue / Amp", ".continue/system.md", AGENCY_INSTRUCTION)
         detected = True
@@ -255,7 +454,7 @@ def auto_detect_and_install():
     if not detected:
         console.print(
             "[yellow]No AI assistant config files detected automatically.\n"
-            "Run the 'Manual AI Assistant Selection' option to configure your tool.[/yellow]"
+            "Use 'Manual AI Assistant Selection' to configure your tool.[/yellow]"
         )
     else:
         console.print("\n[bold green]Success![/bold green] The Virtual IT team is ready to assist your AI.")
@@ -277,10 +476,7 @@ def manual_install():
         questionary.Choice("Back", value="back"),
     ]
 
-    selected = questionary.checkbox(
-        "Select AI Assistants to configure:",
-        choices=choices,
-    ).ask()
+    selected = questionary.checkbox("Select AI Assistants to configure:", choices=choices).ask()
 
     if not selected or "back" in selected:
         return
@@ -312,6 +508,7 @@ def init_agency():
             choices=[
                 "🔍 Auto-detect AI Assistants & Install",
                 "🛠️  Manual AI Assistant Selection",
+                "🦙  Setup Ollama (install / pull models)",
                 "🗺️  Map Digital Twin (Historian + Architect + CMO)",
                 "🔙 Back",
             ],
@@ -323,20 +520,24 @@ def init_agency():
             auto_detect_and_install()
         elif "Manual" in choice:
             manual_install()
+        elif "Ollama" in choice:
+            setup_ollama()
         elif "Digital Twin" in choice:
             map_digital_twin()
 
         print("\n")
+
+# ---------------------------------------------------------------------------
+# Skill runner
+# ---------------------------------------------------------------------------
 
 def browse_skills():
     """Show the organization chart."""
     table = Table(title="The Agency Organization Chart", show_lines=True)
     table.add_column("Department", style="cyan", justify="right")
     table.add_column("Specialized Skills", style="green")
-
     for dept, skills in SKILL_CATEGORIES.items():
         table.add_row(dept, "\n".join(skills))
-
     console.print(table)
 
 def run_skill():
@@ -371,35 +572,44 @@ def run_skill():
     if not task_input:
         return
 
-    model = questionary.text("Which local Ollama model?", default="llama3.2").ask()
+    model = select_model("Which Ollama model should run this skill?")
     if not model:
         return
 
-    console.print(f"\n[bold yellow]Dispatching task to {skill_choice}...[/bold yellow]\n")
+    console.print(f"\n[bold yellow]Dispatching task to {skill_choice} via {model}...[/bold yellow]\n")
 
     skill_context = active_path.read_text(encoding="utf-8")
     prompt = f"{skill_context}\n\nTASK: {task_input}"
 
     try:
+        # stdout not captured — streams directly to terminal
         subprocess.run(
             ["ollama", "run", model],
             input=prompt,
             text=True,
             check=True,
+            timeout=600,
         )
+    except subprocess.TimeoutExpired:
+        console.print("\n[red]Timed out after 10 minutes. Try a smaller/faster model.[/red]")
     except subprocess.CalledProcessError as e:
         console.print(f"\n[red]Ollama pipeline failed: {e}[/red]")
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Cancelled.[/yellow]")
+
+# ---------------------------------------------------------------------------
+# Digital Twin mapping
+# ---------------------------------------------------------------------------
 
 def gather_codebase_context() -> str:
     """Scan the root directory for standard files and capture a directory listing."""
-    console.print("[dim]Gathering codebase context (root directory files and listing)...[/dim]")
+    console.print("[dim]Gathering codebase context...[/dim]")
     context_parts = []
 
-    # 1. Directory listing (top-level only to avoid massive outputs)
     try:
         context_parts.append("### Project Root Directory Listing ###")
-        listing = []
         skip = {".git", ".venv", "node_modules", ".idea", "__pycache__", ".agency"}
+        listing = []
         for item in Path(".").iterdir():
             if item.name in skip:
                 continue
@@ -409,7 +619,6 @@ def gather_codebase_context() -> str:
     except Exception as e:
         context_parts.append(f"Error gathering directory listing: {e}")
 
-    # 2. Key files
     key_files = [
         "README.md", "README.txt", "README",
         "requirements.txt", "Pipfile", "pyproject.toml", "poetry.lock",
@@ -431,7 +640,7 @@ def gather_codebase_context() -> str:
     return "\n\n".join(context_parts)
 
 def run_agent_to_file(skill_choice: str, model: str, task_input: str, output_file: Path, context: str = "") -> bool:
-    """Run an agent and redirect stdout to an output file."""
+    """Run an agent and write output to a file, with a live spinner and 10-min timeout."""
     skill_path_agency = AGENCY_DIR / "skills" / skill_choice / "SKILL.md"
     skill_path_main = SKILLS_SRC_DIR / skill_choice / "SKILL.md"
 
@@ -452,21 +661,41 @@ def run_agent_to_file(skill_choice: str, model: str, task_input: str, output_fil
 
     output_file.parent.mkdir(parents=True, exist_ok=True)
 
-    console.print(f"\n[bold yellow]Dispatching {skill_choice} → {output_file.name}...[/bold yellow]")
+    result = {"success": False, "error": None}
 
-    try:
-        with open(output_file, "w", encoding="utf-8") as out_f:
-            subprocess.run(
-                ["ollama", "run", model],
-                input=prompt,
-                text=True,
-                stdout=out_f,
-                check=True,
-            )
-        console.print(f"[green]Generated: {output_file}[/green]")
+    def _run():
+        try:
+            with open(output_file, "w", encoding="utf-8") as out_f:
+                subprocess.run(
+                    ["ollama", "run", model],
+                    input=prompt,
+                    text=True,
+                    stdout=out_f,
+                    check=True,
+                    timeout=600,
+                )
+            result["success"] = True
+        except subprocess.TimeoutExpired:
+            result["error"] = "Timed out after 10 minutes."
+        except subprocess.CalledProcessError as e:
+            result["error"] = str(e)
+        except Exception as e:
+            result["error"] = str(e)
+
+    thread = threading.Thread(target=_run, daemon=True)
+    thread.start()
+
+    with console.status(
+        f"[bold yellow]{skill_choice}[/bold yellow] is working "
+        f"([dim]{model}[/dim]) → [cyan]{output_file.name}[/cyan]"
+    ):
+        thread.join()
+
+    if result["success"]:
+        console.print(f"[green]✓ Generated: {output_file}[/green]")
         return True
-    except subprocess.CalledProcessError as e:
-        console.print(f"\n[red]Ollama pipeline failed for {skill_choice}: {e}[/red]")
+    else:
+        console.print(f"[red]✗ {skill_choice} failed: {result['error']}[/red]")
         return False
 
 def map_digital_twin():
@@ -484,23 +713,23 @@ def map_digital_twin():
     if not confirm:
         return
 
-    model = questionary.text("Which local Ollama model?", default="llama3.2").ask()
+    model = select_model("Which Ollama model should run the agents?")
     if not model:
         return
 
     context = gather_codebase_context()
 
     historian_task = (
-        "Analyze the provided project context (files and structure). Summarize what this "
-        "project is, its history (if discernible), and its key components. "
-        "Output a 'historian_context.md' summarizing the current state."
+        "Analyze the provided project context. Summarize what this project is, "
+        "its history (if discernible), and its key components. "
+        "Output a historian_context.md summarizing the current state."
     )
     architect_task = (
-        "Review the provided codebase context. Generate a 'system_architecture.md' document "
+        "Review the provided codebase context. Generate a system_architecture.md "
         "outlining the system architecture, technologies used, and deployment structure."
     )
     cmo_task = (
-        "Review the provided codebase context. Generate a 'cmo_state.md' master index document "
+        "Review the provided codebase context. Generate a cmo_state.md master index "
         "that defines the infrastructure, architecture, and feature landscape as the Digital Twin."
     )
 
@@ -509,41 +738,41 @@ def map_digital_twin():
     (docs_dir / "features").mkdir(parents=True, exist_ok=True)
     (docs_dir / "infrastructure").mkdir(parents=True, exist_ok=True)
 
-    run_agent_to_file("historian", model, historian_task, docs_dir / "architecture" / "historian_context.md", context)
+    run_agent_to_file("historian",         model, historian_task, docs_dir / "architecture" / "historian_context.md",  context)
     run_agent_to_file("solution_architect", model, architect_task, docs_dir / "architecture" / "system_architecture.md", context)
-    run_agent_to_file("cmo_analyst", model, cmo_task, docs_dir / "cmo_state.md", context)
+    run_agent_to_file("cmo_analyst",        model, cmo_task,       docs_dir / "cmo_state.md",                           context)
 
     console.print("\n[bold green]Digital Twin Mapping Complete![/bold green]")
     console.print("Review the generated files in the [cyan]docs/[/cyan] directory.")
 
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
 def main_menu():
-    # Handle CLI subcommands when called as `agency <cmd>`
-    # (entry point in pyproject.toml calls main_menu() directly)
+    # Handle CLI subcommands — entry point in pyproject.toml calls main_menu() directly
     if len(sys.argv) > 1:
         cmd = sys.argv[1].lower()
+        print_header()
         if cmd == "init":
-            print_header()
             init_agency()
         elif cmd == "list":
-            print_header()
             browse_skills()
         elif cmd == "run":
-            print_header()
             run_skill()
         elif cmd == "twin":
-            print_header()
             map_digital_twin()
+        elif cmd == "ollama":
+            setup_ollama()
         else:
             console.print(
                 f"[red]Unknown command: '{cmd}'[/red]\n"
-                "Available commands: init, list, run, twin\n"
+                "Available: [cyan]init  list  run  twin  ollama[/cyan]\n"
                 "Run [cyan]agency[/cyan] with no arguments for the interactive menu."
             )
         return
 
-    # Start update check in background
     threading.Thread(target=check_for_updates, daemon=True).start()
-
     print_header()
 
     while True:
@@ -560,6 +789,7 @@ def main_menu():
                 "🚀 Initialize / Configure Project (init)",
                 "👥 Browse Organization Chart (list)",
                 "⚡ Task a specific Skill (run)",
+                "🦙 Ollama Setup (install / pull models)",
                 "❌ Exit",
             ],
         ).ask()
@@ -573,6 +803,8 @@ def main_menu():
             browse_skills()
         elif "run" in choice:
             run_skill()
+        elif "Ollama" in choice:
+            setup_ollama()
 
         print("\n")
 
