@@ -72,13 +72,14 @@ agency
 ```
 
 The CLI will guide you through:
-- **Initialize & Configure:** Automatically scans for AI assistants like Cursor (`.cursorrules`), Gemini (`.gemini`), Roo Code (`.clinerules`), and Claude (`CLAUDE.md`). It installs the Agency skills into your `.agency/` folder and injects specialized system logic into your AI tool's project memory so they know *how* to use the skills!
+- **Initialize & Configure:** Automatically scans for AI assistants — Cursor (`.cursorrules`), Gemini CLI (`.gemini`/`GEMINI.md`), Roo Code / Cline (`.clinerules`), Claude Code (`CLAUDE.md`), Aider (`.aider.conf.yml`), GitHub Copilot (`.github/` directory or `copilot-instructions.md`), and Windsurf (`.windsurfrules`). It installs the Agency skills into your `.agency/` folder and injects a full skill directory with workflow guidance into your AI tool's project memory file so it can immediately navigate and employ the Virtual IT Team.
 - **Browse Skills:** View the organizational chart and understand what every department does.
 - **Run Skill:** Choose a specific skill, paste a task, and the agent will immediately context-switch into your codebase to start working.
 
-### 2. In Premium Agentic Tools (Cursor, Roo Code, Copilot Workspaces)
-Point your AI assistant at the specific `SKILL.md` you want it to embody. 
-For example, tell Cursor: *"Embody the role defined in `skills/frontend_developer/SKILL.md` and complete this task."*
+### 2. In Any AI Coding Tool (Cursor, Roo Code, Copilot, Claude, Gemini…)
+After running `agency init`, your tool's config file already contains the full skill directory.
+Simply ask your assistant: *"Act as the `frontend_developer` skill and complete this task."*
+It will read `.agency/skills/frontend_developer/SKILL.md` and adopt the persona automatically.
 
 ### 3. Pure Makefiles & Terminal Piping
 If you prefer raw execution, you can completely ignore `.agency.py` and run sequential generation using the `Makefile` pattern.
@@ -101,10 +102,10 @@ While skills have "Brains", they need "Hands" to affect the local machine. By in
 
 If you are not starting from scratch, you can easily drop "The Agency" into a mature, existing repository.
 
-**1. Call the `agency` command and select "Initialize"**
-The `agency init` command does two massive things:
-- It automatically configures whatever native AI tool you use (Cursor, Cline, Gemini, Aider) with the Agency's context and instructions.
-- It copies the entire `skills/` directory into your `.agency/` folder.
+**1. Call `agency init` (or just `agency`) and select "Initialize"**
+The init step does two things:
+- Copies the entire skills library into `.agency/skills/` in your project.
+- Injects a full skill directory + workflow guide into your AI tool's config file (`.cursorrules`, `CLAUDE.md`, `.github/copilot-instructions.md`, `GEMINI.md`, etc.) so the assistant immediately knows how to navigate and use the Virtual IT Team without any extra prompting.
 
 **2. Initialize the "Digital Twin" (The Most Important Step)**
 AI agents hallucinate when they don't know your existing architecture. Before asking the Agency to write new code for your existing app, you must map your current state. From the `agency` initialization menu, select **"Map Digital Twin"**:
