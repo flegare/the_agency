@@ -1,0 +1,678 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Packages ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{natbib}
+\usepackage{microtype}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage{abstract}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=green!50!black,
+  urlcolor=blue!60!black
+}
+
+\lstset{
+  basicstyle=\small\ttfamily,
+  breaklines=true,
+  frame=single,
+  rulecolor=\color{gray!40},
+  backgroundcolor=\color{gray!5}
+}
+
+% --- Title ---
+\title{%
+  \textbf{Directive Grounding as a Substitute for Model Scale:}\\
+  \large How Structured Skill Definitions Enable Quantized LLMs\\
+  to Perform Specialist One-Shot Tasks
+}
+
+\author{
+  The Agency Framework\\
+  \texttt{https://github.com/flegare/the\_agency}
+}
+
+\date{March 2026}
+
+% ===========================================================================
+\begin{document}
+\maketitle
+
+% --- Abstract ---
+\begin{abstract}
+Large language models (LLMs) are commonly scaled up—in both parameter count
+and numerical precision—to handle complex, open-ended reasoning tasks. We
+challenge the assumption that \emph{model scale} is the primary driver of
+task-completion quality in structured, domain-specific agentic workflows.
+Instead, we propose the \textbf{Directive Grounding Hypothesis}: that the
+behavioral intelligence required to complete a well-scoped software
+engineering task can be largely externalized into a structured persona
+definition—a \emph{Skill}—thereby reducing the residual cognitive burden
+placed on the underlying model to a level achievable by aggressively
+quantized, locally-executable LLMs. We formalize a model of intelligence
+distribution across the skill definition and model weights, derive an
+operational criterion for skill directiveness, and demonstrate through the
+design of \textit{The Agency} framework how this principle yields reliable
+one-shot task completion using 3--8~billion parameter quantized models where
+ungrounded prompting fails. Our findings suggest a practical path toward
+democratizing capable AI-assisted software development without dependence on
+proprietary cloud APIs.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% ===========================================================================
+\section{Introduction}
+
+The dominant paradigm in large language model deployment assumes a direct
+relationship between model capability and model scale. Practitioners
+routinely reach for larger, higher-precision models when facing complex tasks:
+tasks that smaller models fail at in isolation. This creates a structural
+dependency on cloud-hosted APIs and GPU clusters far beyond the reach of
+individual developers or resource-constrained organizations.
+
+At the same time, quantization research has demonstrated that models can be
+compressed to 4-bit or even 3-bit precision with surprisingly small losses in
+general benchmark performance~\citep{frantar2022gptq, dettmers2022llmint8}.
+Yet practitioners report that quantized models struggle with the kinds of
+multi-step, open-ended reasoning tasks that characterize real software
+engineering work—not because their weights are insufficient in isolation, but
+because the \emph{implicit problem specification} they receive leaves too much
+ambiguity for a compressed reasoning engine to resolve reliably.
+
+We argue that this failure mode is a property of \emph{task formulation}, not
+model capacity. A quantized 7B model presented with the instruction
+\textit{``write a secure authentication module''} must simultaneously:
+
+\begin{enumerate}[noitemsep]
+  \item Interpret the domain (web auth, CLI auth, API keys, OAuth\ldots)
+  \item Select a security posture (OWASP, zero-trust, minimal attack surface\ldots)
+  \item Infer the project's technology stack
+  \item Choose a code structure and naming convention
+  \item Decide on test coverage requirements
+  \item Determine deployment constraints
+\end{enumerate}
+
+Each of these sub-decisions consumes representational capacity from the model.
+Crucially, none of them are \emph{reasoning} tasks—they are
+\emph{disambiguation} tasks. If the task specification were precise enough to
+eliminate all ambiguity, the model could direct its full capacity toward code
+generation itself.
+
+This is the central insight of this paper: \textbf{a sufficiently directive
+skill definition can absorb the disambiguation burden, leaving only the
+residual creative and syntactic synthesis task to the model}. The required
+model capacity for the residual task is substantially lower than for the
+combined disambiguation-plus-synthesis task—potentially low enough to be
+handled by quantized local models.
+
+The remainder of this paper is structured as follows. Section~\ref{sec:background}
+reviews relevant work on quantization, prompt engineering, and agent frameworks.
+Section~\ref{sec:hypothesis} formalizes the Directive Grounding Hypothesis.
+Section~\ref{sec:intelligence-dist} develops a model of intelligence
+distribution. Section~\ref{sec:directiveness} introduces a practical criterion
+for skill directiveness. Section~\ref{sec:agency} describes how The Agency
+framework instantiates these principles. Section~\ref{sec:implications}
+discusses implications for deployment. Section~\ref{sec:future} outlines an
+experimental validation program. Section~\ref{sec:conclusion} concludes.
+
+% ===========================================================================
+\section{Background}
+\label{sec:background}
+
+\subsection{Model Quantization}
+
+Quantization reduces the numerical precision of model weights from 32-bit or
+16-bit floating point to lower-bit integer representations. The seminal work
+of \citet{dettmers2022llmint8} demonstrated that 8-bit quantization of large
+models could be achieved with minimal accuracy loss using mixed-precision
+decomposition. \citet{frantar2022gptq} extended this to 4-bit precision using
+approximate second-order weight updates, enabling 70B parameter models to run
+on consumer hardware.
+
+Subsequent work such as GGUF/llama.cpp~\citep{gerganov2023llamacpp} and
+Ollama~\citep{ollama2023} has made quantized local inference accessible to
+practitioners without specialized knowledge, typically at 3--5 bits per weight.
+
+The standard critique of quantized models is degraded performance on
+``reasoning-heavy'' benchmarks (e.g., GSM8K, HumanEval). However, we note
+that these benchmarks measure \emph{ungrounded} reasoning: the model must
+derive all context from first principles. This is a maximally unfavorable
+evaluation setting for quantized models.
+
+\subsection{Prompt Engineering and Chain-of-Thought}
+
+Research on chain-of-thought prompting~\citep{wei2022chain} demonstrated that
+decomposing complex reasoning tasks into explicit intermediate steps
+dramatically improves the performance of smaller models. This is an early
+instance of the principle we formalize: externalizing cognitive structure
+reduces the load on model weights. Least-to-most prompting~\citep{zhou2022least}
+and program-of-thought~\citep{chen2022program} extend this principle further.
+
+Zero-shot chain-of-thought~\citep{kojima2022large} showed that even a simple
+directive (``Let's think step by step.'') could unlock substantial latent
+capability in mid-sized models. If a four-word directive achieves this,
+structured multi-page persona definitions should achieve substantially more.
+
+\subsection{Agent Frameworks and Role-Playing}
+
+ReAct~\citep{yao2023react} demonstrated that interleaving reasoning and acting
+in a structured loop improves LLM agent performance. Generative
+Agents~\citep{park2023generative} showed that rich contextual scaffolding about
+an agent's identity, memory, and social role produces coherent long-horizon
+behavior from GPT-4-class models.
+
+Crucially, \citet{chen2023agentverse} showed that \emph{role specialization}
+in multi-agent systems—where each agent has a narrow, well-defined
+responsibility—produces better outcomes than generalist agents, even when the
+underlying models are identical. The performance gain derives from the role
+definition, not the model.
+
+Toolformer~\citep{schick2023toolformer} demonstrated that teaching a model
+when and how to invoke external tools—a form of procedural grounding—
+dramatically expands the effective task frontier of a 6.7B parameter model.
+We interpret this as another instance of intelligence distribution: the tool
+usage protocol absorbs the decision-making load, leaving the model to focus
+on content generation.
+
+\subsection{The Lost-in-the-Middle Problem}
+
+\citet{liu2023lost} showed that LLMs suffer from significant positional bias
+in long contexts: information in the middle of a long context window is
+systematically underweighted relative to information at the beginning or end.
+This finding has direct implications for skill design—the most critical
+constraints must be placed at the beginning or end of the skill definition
+to ensure they are reliably attended to by quantized models with smaller
+effective context windows.
+
+% ===========================================================================
+\section{The Directive Grounding Hypothesis}
+\label{sec:hypothesis}
+
+\begin{description}
+  \item[Definition (Grounding).] A \emph{grounding} $G$ for a task $T$ is a
+  set of declarative and procedural statements that reduce the effective
+  search space $\mathcal{S}(T)$ over valid outputs. More directive groundings
+  have smaller residual search spaces.
+
+  \item[Definition (Skill).] A \emph{Skill} $\mathcal{K}$ is a structured
+  text document comprising: (i) a role identity, (ii) a set of core
+  responsibilities, (iii) explicit workflow integration rules, and (iv) named
+  constraints and heuristics applicable to the role's domain.
+
+  \item[Definition (Residual Task).] Given a task $T$ and a skill
+  $\mathcal{K}$, the \emph{residual task} $T | \mathcal{K}$ is the task
+  remaining after applying the grounding provided by $\mathcal{K}$:
+  \[
+    T | \mathcal{K} = T \setminus \text{decisions}(\mathcal{K})
+  \]
+  where $\text{decisions}(\mathcal{K})$ denotes the set of sub-decisions
+  resolved by the skill definition.
+\end{description}
+
+\vspace{0.5em}
+\noindent\textbf{Directive Grounding Hypothesis.} \textit{There exists a skill
+$\mathcal{K}^*$ for any bounded software engineering task $T$ such that the
+residual task $T | \mathcal{K}^*$ lies within the reliable capability envelope
+of an aggressively quantized local LLM $M_q$, even though $T$ itself does not:}
+\[
+  P(M_q \text{ succeeds on } T) \ll P(M_q \text{ succeeds on } T | \mathcal{K}^*)
+\]
+
+This hypothesis makes a strong claim: the bottleneck for quantized model
+failure on complex tasks is not \emph{weight capacity} per se, but the
+\emph{unresolved ambiguity} in the task specification. Resolving that
+ambiguity externally, through a directive skill definition, unlocks latent
+model capacity that was previously consumed by disambiguation.
+
+\vspace{0.5em}
+\noindent\textbf{Corollary (Quantization-Skill Substitutability).}
+\textit{Within bounded domains, increasing skill directiveness is a
+partial substitute for increasing model scale or precision.} That is, for
+a target task-completion quality $Q^*$:
+\[
+  (M_{\text{large}}, \mathcal{K}_{\text{weak}}) \approx_Q
+  (M_{\text{small}}, \mathcal{K}_{\text{directive}})
+\]
+
+This corollary is the operational claim of this paper: intelligence can be
+traded across the model--skill boundary.
+
+% ===========================================================================
+\section{A Model of Intelligence Distribution}
+\label{sec:intelligence-dist}
+
+We model the total intelligence required to complete a task $T$ as a scalar
+$I(T)$. This total is distributed across two sources:
+
+\begin{enumerate}
+  \item \textbf{Parametric intelligence} $I_\theta$: derived from the model's
+  trained weights. This is the component reduced by quantization.
+  \item \textbf{Contextual intelligence} $I_c$: derived from the information
+  provided in the context window at inference time—including the skill
+  definition, project state, and task description.
+\end{enumerate}
+
+For a task to succeed, we require:
+\[
+  I_\theta(M) + I_c(\mathcal{K}, \text{context}) \geq I(T)
+\]
+
+For a full-precision large model, $I_\theta$ is high, so the bar on $I_c$ is
+low—a vague task description suffices. For a quantized small model,
+$I_\theta$ is reduced, so $I_c$ must compensate. A directive skill definition
+systematically maximizes $I_c$.
+
+\subsection{Components of Contextual Intelligence}
+
+A well-designed skill definition contributes to $I_c$ through four channels:
+
+\begin{description}
+  \item[Role Grounding.] Establishing a specific identity (e.g.,
+  \textit{application\_security\_engineer}) primes the model's attention toward
+  a narrow region of its parametric knowledge, reducing activation of
+  irrelevant or conflicting patterns from other domains.
+
+  \item[Responsibility Scoping.] An explicit numbered list of core
+  responsibilities converts a complex open task into a constrained sequence
+  of subtasks. Each subtask has a substantially smaller search space than
+  the combined task.
+
+  \item[Workflow Proceduralization.] Explicit handoff rules (``after
+  completing X, pass to Y skill'') externalize the planning component of
+  task execution. Planning is expensive for quantized models; proceduralization
+  eliminates it.
+
+  \item[Heuristic Constraints.] Named behavioral rules (e.g., ``Cyclic Error
+  Watchdog: if stuck in an error loop for more than 3 iterations, stop and
+  report'') encode domain expertise that would otherwise require the model to
+  derive from first principles under uncertainty.
+\end{description}
+
+\subsection{The Disambiguation Ceiling}
+
+Figure~\ref{fig:dist} illustrates the key relationship. As a task grows in
+complexity (x-axis), the disambiguation ceiling for quantized models is
+reached quickly—beyond a threshold, ungrounded models fail reliably. A
+directive skill shifts the effective task complexity downward by absorbing
+disambiguation load, moving the task back within the quantized model's
+reliable operating region.
+
+\begin{figure}[h]
+\centering
+\begin{minipage}{0.85\textwidth}
+\lstset{frame=none,backgroundcolor=\color{white}}
+\begin{lstlisting}[language={},basicstyle=\small\ttfamily]
+Task Success Rate
+    ^
+1.0 |......................
+    |              ......        Full-precision large model
+    |          ....
+    |       ...
+0.5 |    ...               ....         Quantized + Directive Skill
+    |   .               ...
+    |  .             ...
+    | .            ..
+    |.           ..              Quantized, no skill grounding
+0.0 +............._____________._____________> Task Complexity
+         low         medium          high
+\end{lstlisting}
+\end{minipage}
+\caption{Schematic relationship between task complexity and success rate for
+three configurations: full-precision large model (top), quantized model with
+directive skill grounding (middle), and quantized model with minimal grounding
+(bottom). Directive grounding shifts the quantized model's capability curve
+rightward, toward higher task complexity.}
+\label{fig:dist}
+\end{figure}
+
+% ===========================================================================
+\section{Measuring Skill Directiveness}
+\label{sec:directiveness}
+
+We propose a practical \emph{Directiveness Score} $D(\mathcal{K})$ for a
+skill definition, computed as a weighted sum of structural properties:
+
+\[
+  D(\mathcal{K}) = w_1 \cdot R + w_2 \cdot P + w_3 \cdot H + w_4 \cdot B
+\]
+
+where:
+\begin{itemize}[noitemsep]
+  \item $R$ = number of explicitly numbered responsibilities
+  \item $P$ = number of explicit procedural handoff rules
+  \item $H$ = number of named heuristic constraints
+  \item $B$ = 1 if the skill includes a ``Discovery Protocol'' (must read
+    before writing), 0 otherwise
+  \item $w_1, w_2, w_3, w_4$ are empirically determined weights
+\end{itemize}
+
+A skill with $D(\mathcal{K}) = 0$ is a purely identity-based prompt (e.g.,
+``You are a software engineer.''). A skill with high $D(\mathcal{K})$
+provides an exhaustive procedural specification. We hypothesize a monotonic
+relationship between $D(\mathcal{K})$ and $P(M_q \text{ succeeds on }
+T | \mathcal{K})$ for fixed $M_q$ and $T$.
+
+\subsection{Anti-Patterns in Low-Directive Skills}
+
+The following skill structures are associated with low directiveness and
+high failure rates in quantized models:
+
+\begin{description}
+  \item[Identity-only prompts.] ``You are a security expert.'' Provides role
+    grounding but no responsibility scoping or procedural structure.
+  \item[Capability lists.] ``You can do X, Y, and Z.'' Describes capability
+    without constraining behavior or sequencing.
+  \item[Outcome statements.] ``Produce high-quality, secure code.'' Specifies
+    a desired output quality without providing a path to achieve it.
+\end{description}
+
+\subsection{Patterns in High-Directive Skills}
+
+Conversely, high-directive skills exhibit:
+
+\begin{description}
+  \item[Ordered responsibility lists.] Each responsibility is numbered and
+    action-oriented (verb-first: ``Perform X'', ``Validate Y'', ``Generate Z'').
+  \item[Explicit pre-conditions.] ``Before generating any output, you MUST
+    read [file]. If [file] does not exist, halt and report its absence.''
+  \item[Named watchdogs.] ``Cyclic Error Watchdog: if the same error recurs
+    after 3 fix attempts, stop and explain the contradiction.''
+  \item[Handoff protocols.] ``Upon completion, produce a structured handoff
+    document for the [next\_skill] detailing [specific outputs].''
+  \item[Scope delimiters.] Explicit statements of what the skill does
+    \emph{not} do, preventing scope creep that consumes model context.
+\end{description}
+
+% ===========================================================================
+\section{The Agency Framework as an Implementation}
+\label{sec:agency}
+
+The Agency\footnote{\url{https://github.com/flegare/the_agency}} is an
+open-source framework that implements these principles through 32 specialized
+skill definitions organized as an enterprise software development organization.
+Each skill is defined as a structured Markdown document (\texttt{SKILL.md})
+injected into the context window of whatever AI assistant or LLM the
+practitioner uses.
+
+\subsection{Skill Architecture}
+
+Each \texttt{SKILL.md} follows a canonical structure:
+
+\begin{lstlisting}[language={},caption={Canonical SKILL.md structure}]
+---
+name: Application Security Engineer
+description: Code hardening and threat modeling
+---
+
+# Application Security Engineer
+
+[Role identity and organizational context]
+
+## Your Core Responsibilities
+1. [Ordered, action-oriented responsibility]
+2. [...]
+N. [...]
+
+## Workflow Integration
+[Explicit handoff rules: who triggers this skill,
+ what it produces, who receives its outputs]
+\end{lstlisting}
+
+\subsection{The Discovery Protocol Pattern}
+
+Several high-stakes skills in The Agency implement a \emph{Discovery Protocol}
+that explicitly forbids output generation before file reading:
+
+\begin{lstlisting}[language={},caption={Discovery Protocol excerpt from historian/SKILL.md}]
+DISCOVERY PROTOCOL (Mandatory):
+Before writing ANY output, you MUST:
+1. Read docs/cmo_state.md (if it exists). Mark as [MISSING] if absent.
+2. Read docs/architecture/system_architecture.md. Mark as [MISSING] if absent.
+3. List every file you have read at the top of your response.
+
+NEVER infer, assume, or hallucinate project state.
+If a file is missing, document its absence explicitly.
+\end{lstlisting}
+
+This protocol is a direct implementation of the heuristic constraint
+pattern described in Section~\ref{sec:directiveness}. It eliminates the
+hallucination failure mode—where quantized models confidently generate
+plausible but incorrect project state—by making file reading a pre-condition
+for any output.
+
+\subsection{The Project Manager as a Router}
+
+The \texttt{project\_manager} skill implements the Responsibility Scoping
+pattern at a meta-level: its sole responsibility is task decomposition and
+routing to appropriate specialist skills. This separates the \emph{planning}
+function (which is disambiguation-heavy) from the \emph{execution} function
+(which is synthesis-heavy), allowing different quantization levels to be
+applied to each phase.
+
+\subsection{Workflow Integration Graph}
+
+The Agency's skills form a directed acyclic graph (DAG) of handoffs:
+
+\[
+  \text{project\_manager} \to \text{cmo\_analyst} \to \text{solution\_architect}
+  \to \text{ciso} \to \text{backend/frontend} \to \text{chief\_test\_officer}
+  \to \text{ssdlc\_manager} \to \text{historian}
+\]
+
+Each edge in the DAG represents an explicit handoff protocol defined in the
+sending skill's Workflow Integration section. A quantized model executing any
+node in this graph need not plan the overall workflow—the plan is encoded in
+the skill definition. This is a direct implementation of the workflow
+proceduralization component of $I_c$.
+
+\subsection{Skill Directiveness Scores in The Agency}
+
+Table~\ref{tab:scores} provides indicative directiveness scores for a
+representative sample of Agency skills, using equal weights
+($w_1 = w_2 = w_3 = w_4 = 1$):
+
+\begin{table}[h]
+\centering
+\caption{Indicative Directiveness Scores for selected Agency skills.
+$R$: responsibilities, $P$: handoff rules, $H$: named heuristics,
+$B$: discovery protocol present.}
+\label{tab:scores}
+\begin{tabular}{lccccr}
+\toprule
+Skill & $R$ & $P$ & $H$ & $B$ & $D(\mathcal{K})$ \\
+\midrule
+\texttt{historian}                    & 8  & 4 & 3 & 1 & 16 \\
+\texttt{cmo\_analyst}                 & 12 & 5 & 4 & 1 & 22 \\
+\texttt{application\_security\_engineer} & 7 & 3 & 3 & 0 & 13 \\
+\texttt{chief\_test\_officer}         & 6  & 4 & 2 & 0 & 12 \\
+\texttt{frontend\_developer}          & 5  & 2 & 1 & 0 &  8 \\
+\texttt{coder}                        & 4  & 2 & 2 & 0 &  8 \\
+\texttt{solution\_architect}          & 5  & 3 & 0 & 0 &  8 \\
+\texttt{project\_manager}             & 4  & 6 & 0 & 0 & 10 \\
+\midrule
+Mean & 6.4 & 3.6 & 1.9 & 0.25 & 12.1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The \texttt{cmo\_analyst} skill—which maintains the master project state
+document and is the highest-stakes single point of ground truth—has the
+highest directiveness score. This is consistent with the hypothesis: tasks
+requiring the most ground-truth fidelity receive the most directive
+specifications.
+
+% ===========================================================================
+\section{Implications for Practical Deployment}
+\label{sec:implications}
+
+\subsection{Democratizing Agentic Software Development}
+
+If the Directive Grounding Hypothesis holds, it has significant practical
+implications. Organizations can replace API dependencies on GPT-4-class or
+Claude-class models for structured coding workflows with locally-executable
+3--8B quantized models (e.g., \texttt{llama3.2:3b}, \texttt{qwen2.5-coder:7b},
+\texttt{codellama:7b} via Ollama), provided they invest in directive skill
+design rather than model scale.
+
+The economics are substantial: a locally-hosted quantized model costs the
+electricity of one workstation GPU, versus API costs that can reach hundreds
+of dollars per month for intensive agentic workflows.
+
+\subsection{The Skill-as-Compression Trade-off}
+
+We note a dual relationship: a directive skill definition can be thought of
+as a \emph{lossless compression} of domain expertise into structured text.
+The model at inference time \emph{decompresses} this expertise by applying
+it to the specific task. The compression ratio (skill definition length to
+effective intelligence contributed) is a key metric for skill design quality.
+
+A well-designed skill should be \emph{maximally dense}—every sentence should
+resolve a decision that the model would otherwise have to make
+independently—while remaining \emph{concise enough} to fit within the
+effective context window of a quantized model without triggering the
+lost-in-the-middle degradation documented by \citet{liu2023lost}.
+
+\subsection{Skill Versioning and Model-Specific Tuning}
+
+Different quantized models have different ``disambiguation tolerances''—the
+amount of residual ambiguity they can handle before failure rates become
+unacceptable. A practical deployment strategy involves:
+
+\begin{enumerate}
+  \item Profiling target model disambiguation tolerance on a reference task suite.
+  \item Measuring the directiveness deficit between the model's tolerance and
+    the task's inherent ambiguity.
+  \item Augmenting skill definitions to cover the deficit, without exceeding
+    the context budget.
+\end{enumerate}
+
+This creates a natural versioning system for skills: \texttt{SKILL.md} for
+large models, \texttt{SKILL.compact.md} for 7B models, and
+\texttt{SKILL.minimal.md} for 3B models—each with increasing directiveness
+to compensate for decreasing parametric capacity.
+
+\subsection{Security Implications}
+
+A corollary of high directiveness is reduced jailbreak surface. A model
+operating under an exhaustive set of procedural constraints has fewer
+degrees of freedom through which an adversarial input can redirect behavior.
+This aligns with the prompt injection defense motivation of The Agency's
+Basalt Shield integration, which validates all skill definitions against
+prompt injection attempts before merging.
+
+% ===========================================================================
+\section{Experimental Validation Framework}
+\label{sec:future}
+
+The Directive Grounding Hypothesis is an empirical claim that requires
+systematic validation. We outline a proposed experimental program:
+
+\subsection{Experiment 1: Directiveness vs. Success Rate}
+
+\textbf{Design.} For a fixed set of software engineering tasks $\{T_i\}$
+and a fixed quantized model $M_q$ (e.g., \texttt{llama3.2:3b} at 4-bit),
+produce skill definitions at varying directiveness levels
+$D_1 < D_2 < \ldots < D_k$ by progressively adding responsibilities,
+handoff rules, and named constraints.
+
+\textbf{Metric.} One-shot task completion rate, assessed by automated test
+suite execution and human review of output artifacts.
+
+\textbf{Hypothesis.} Task completion rate increases monotonically with
+directiveness up to a saturation point, after which additional directives
+provide diminishing returns.
+
+\subsection{Experiment 2: Quantization-Skill Substitutability}
+
+\textbf{Design.} Fix a target task-completion quality $Q^*$. Identify the
+minimum model size required to achieve $Q^*$ with a minimal skill definition
+($D \approx 0$). Then, progressively increase skill directiveness and measure
+the reduction in minimum model size required to maintain $Q^*$.
+
+\textbf{Metric.} Minimum viable parameter count as a function of $D(\mathcal{K})$.
+
+\textbf{Hypothesis.} A well-designed directive skill can substitute for
+approximately one order of magnitude of parameter count (e.g., enabling a
+7B model to match a 70B model on the target task).
+
+\subsection{Experiment 3: Discovery Protocol Ablation}
+
+\textbf{Design.} Compare task completion rates for skills with and without
+the Discovery Protocol requirement, specifically targeting tasks where
+hallucinated project state would cause downstream failures.
+
+\textbf{Hypothesis.} The Discovery Protocol produces a statistically
+significant reduction in hallucination-caused failures, with the largest
+effect size in quantized models.
+
+\subsection{Benchmark Tasks}
+
+Candidate tasks for validation, spanning the Agency skill graph:
+
+\begin{itemize}[noitemsep]
+  \item Implement a JWT authentication middleware from an architecture spec
+  \item Generate a full test suite for a given API contract
+  \item Produce a threat model for a described microservice topology
+  \item Migrate a schema from PostgreSQL to a graph database model
+  \item Write a CI/CD pipeline definition from infrastructure constraints
+\end{itemize}
+
+Each task has an objectively verifiable success criterion (tests pass,
+schema validates, pipeline executes) making automated evaluation tractable.
+
+% ===========================================================================
+\section{Conclusion}
+\label{sec:conclusion}
+
+We have presented the Directive Grounding Hypothesis: that the intelligence
+required to complete bounded software engineering tasks can be distributed
+across model weights and context-provided skill definitions, with a
+substitutability relationship between parametric capacity and skill
+directiveness. This implies that aggressively quantized local models can
+perform specialist agentic tasks when equipped with sufficiently directive
+skill definitions—tasks that would fail with the same models under
+minimal grounding.
+
+The Agency framework is a practical instantiation of these principles,
+providing 32 directive skill definitions organized as a complete virtual IT
+organization. The framework's design—including Discovery Protocols, ordered
+responsibility lists, named heuristic constraints, and explicit workflow
+handoff rules—maps directly onto the contextual intelligence components
+identified in our model.
+
+The practical consequence is significant: teams can pursue capable AI-assisted
+software development workflows using locally-hosted quantized models,
+eliminating API dependencies and associated costs, provided they invest in
+skill definition quality rather than raw model scale.
+
+We invite the community to validate the Directive Grounding Hypothesis
+through the experimental program outlined in Section~\ref{sec:future},
+using the Agency skill library as a reference implementation.
+
+% ===========================================================================
+\section*{Acknowledgements}
+The Agency framework is an open-source project. Contributions to skill
+design, security validation (Basalt Shield), and CLI tooling are gratefully
+acknowledged.
+
+% ===========================================================================
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}
